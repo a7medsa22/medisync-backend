@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,102 +10,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  password        String
-  firstName       String
-  lastName        String
-  phone           String?
-  nationalId      String   @unique
-  idCardImage     String
-  role            UserRole  @default(PATIENT)
-  status          UserStatus @default(PENDING)
-  rejectionReason String?
-  isActive        Boolean   @default(false)
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  approvedAt      DateTime?
-  approvedBy      String?
-
-  // // Relations
-  // patient         Patient?
-  // doctor          Doctor?
-  // createdAppointments Appointment[] @relation("CreatedByUser")
-  
-  @@map("users")
-}
-model Patient{
-  id               String     @id @default(uuid())
-  userId           String     @unique
-  dateOfBirth      DateTime?  
-  gender           String?    
-  address          String?
-  emergencyContact String?
-  bloodType        String?
-  allergies        String?
-}
-
-model Doctor{
-  id                String       @id @default(uuid())
-  userId            String       @unique
-  specializationId  String?      @unique
-  licenseNumber     String?
-  experience        String?
-  bio               String?
-  consultationFee   Float?
-  clinic_location   String?
-
-  // Working hours
-  workingHours      Json?   // ["monday", "tuesday", ...]
-  workingDays       Json?    // {"start": "09:00", "end": "17:00"}
-
-  // Relations
-}
-model Appointment{
-  id                String     @id @default(uuid())
-  patientId         String
-  doctorId          String
-
-  appointmentDate   DateTime
-  appointmentTime   String        // "14:30"
-  status            AppointmentStatus @default(SCHEDULED)
-  duration          Int           @default(30) // minutes
-
-  symptoms          String?
-  notes             String?
-  cancellationReason String?
-
- // Timestamps
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  createdBy       String
-
-  //Relation
-
-}
-model MedicalRecords {
-  id                String     @id @default(uuid())
-  patientId         String
-  doctorId          String
-  appointmentId     String
-  recordDate        DateTime
-  notes             String?
-}
-
-
-
-
-
-
 enum UserRole {
   PATIENT
   DOCTOR
   ADMIN
 }
+
 enum UserStatus {
   PENDING
   APPROVED
@@ -121,4 +28,135 @@ enum AppointmentStatus {
   COMPLETED
   CANCELLED
   NO_SHOW
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String?
+  nationalId      String?   @unique
+  idCardImage     String?
+  role            UserRole  @default(PATIENT)
+  status          UserStatus @default(PENDING)
+  rejectionReason String?
+  isActive        Boolean   @default(false)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  approvedAt      DateTime?
+  approvedBy      String?
+
+  // Relations
+  patient         Patient?
+  doctor          Doctor?
+  createdAppointments Appointment[] @relation("CreatedByUser")
+  
+  @@map("users")
+}
+
+model Patient {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  dateOfBirth     DateTime?
+  gender          String?
+  address         String?
+  emergencyContact String?
+  bloodType       String?
+  allergies       String?
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  medicalRecords  MedicalRecord[]
+  
+  @@map("patients")
+}
+
+model Specialization {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  nameAr      String?
+  description String?
+  
+  // Relations
+  doctors     Doctor[]
+  
+  @@map("specializations")
+}
+
+model Doctor {
+  id                String        @id @default(uuid())
+  userId            String        @unique
+  specializationId  String
+  licenseNumber     String?       @unique
+  experience        Int?
+  bio               String?
+  consultationFee   Decimal?
+  
+  // Working hours
+  workingDays       Json?         // ["monday", "tuesday", ...]
+  workingHours      Json?         // {"start": "09:00", "end": "17:00"}
+  
+  // Relations
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization    Specialization @relation(fields: [specializationId], references: [id])
+  appointments      Appointment[]
+  
+  @@map("doctors")
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  patientId   String
+  doctorId    String
+  
+  appointmentDate DateTime
+  appointmentTime String        // "14:30"
+  duration        Int           @default(30) // minutes
+  status          AppointmentStatus @default(SCHEDULED)
+  
+  notes           String?
+  symptoms        String?
+  cancellationReason String?
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdBy       String
+  
+  // Relations
+  patient         Patient       @relation(fields: [patientId], references: [id])
+  doctor          Doctor        @relation(fields: [doctorId], references: [id])
+  creator         User          @relation("CreatedByUser", fields: [createdBy], references: [id])
+  
+  @@unique([doctorId, appointmentDate, appointmentTime])
+  @@map("appointments")
+}
+
+model MedicalRecord {
+  id          String    @id @default(uuid())
+  patientId   String
+  
+  recordType  String    // "consultation", "lab_result", "prescription", "radiology"
+  title       String
+  description String?
+  diagnosis   String?
+  treatment   String?
+  medications String?
+  
+  // File attachments
+  attachments Json?     // [{"filename": "report.pdf", "url": "...", "type": "pdf"}]
+  
+  recordDate  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  
+  @@map("medical_records")
 }

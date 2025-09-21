@@ -89,6 +89,51 @@ src/
 ├── config/                # Application configuration
 └── database/              # Prisma schema & migrations
 ```
+---
+### 3. Environment Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+# Database Configuration
+DATABASE_URL="postgresql://username:password@localhost:5432/medisync_db?schema=public"
+
+# JWT Configuration
+JWT_SECRET="your-super-secret-jwt-key-change-in-production"
+JWT_REFRESH_SECRET="your-refresh-token-secret-key"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+# Application Configuration
+NODE_ENV="development"
+PORT=3000
+API_PREFIX="api/v1"
+
+# File Upload Configuration
+MAX_FILE_SIZE=10485760  # 10MB in bytes
+UPLOAD_DEST="./uploads"
+
+# Cloudinary Configuration (Optional)
+CLOUDINARY_NAME="your-cloudinary-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
+
+# Email Configuration (for notifications)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT=587
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-email-password"
+SMTP_FROM="MediSync <noreply@medisync.com>"
+
+# Rate Limiting
+THROTTLE_TTL=60  # seconds
+THROTTLE_LIMIT=100  # requests per TTL
+
+# Security
+CORS_ORIGIN="http://localhost:3000,http://localhost:3001"
+COOKIE_SECRET="your-cookie-secret-key"
+```
+---
 
 ## 🔐 Security Features
 

@@ -82,6 +82,15 @@ async function bootstrap() {
     });
   }
 
-  await app.listen(process.env.PORT ?? 3000);
+   // Start Server
+  const port = config.get('PORT', 3000);
+  await app.listen(port);
+  
+  console.log(`
+  MediSync Backend Server Started!
+  Server running on: http://localhost:${port}
+  API Documentation: http://localhost:${port}/${apiPrefix}/docs
+  Environment: ${config.get('NODE_ENV', 'development')}
+  `);
 }
 bootstrap();

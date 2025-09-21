@@ -3,13 +3,18 @@ import { AppModule } from './app.module';
 import helmet from 'helmet'
 import compression from 'compression'
 import { ConfigService } from '@nestjs/config';
-import { VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService)
-
+ 
+  // Security
   app.use(helmet())
   app.use(compression())
+
+  // CORS
   app.enableCors({
     origin: config.get('CORS_ORIGIN').split(',') ?? ['http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
@@ -17,11 +22,65 @@ async function bootstrap() {
     credentials: true,
   })
 
+  // API Versioning
   app.enableVersioning({
     type:VersioningType.URI,
     defaultVersion:'1',
   })
 
+    // Global Prefix
+  const apiPrefix = config.get('API_PREFIX')
+  app.setGlobalPrefix(apiPrefix)
+
+  // Global Validation Pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      skipMissingProperties: false,
+      skipNullProperties: false,
+      skipUndefinedProperties: false,
+    })
+  )
+
+    // Global Filters & Interceptors
+    //
+    //
+
+
+   // Swagger Documentation
+  if (config.get('NODE_ENV') === 'development') {
+    const config = new DocumentBuilder()
+      .setTitle('MediSync API')
+      .setDescription('Medical Appointment & Records Management System API')
+      .setVersion('1.0')
+      .addTag('Authentication', 'User authentication endpoints')
+      .addTag('Users', 'User management endpoints')
+      .addTag('Appointments', 'Appointment booking endpoints')
+      .addTag('Medical Records', 'Medical records management')
+      .addTag('Admin', 'Administrative endpoints')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'JWT',
+          description: 'Enter JWT token',
+          in: 'header',
+        },
+        'JWT-auth',
+      )
+      .build();
+     
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

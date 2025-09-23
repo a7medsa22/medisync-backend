@@ -128,6 +128,38 @@ export class AuthService {
       expiresIn: Number(this.configService.get('JWT_EXPIRES_IN', '15m')),
     };
   }
+
+      async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+        try {
+          const payload = await this.jwtService.verifyAsync(refreshToken, {
+            secret: this.configService.get('JWT_REFRESH_SECRET'),
+          });
+          const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user || user.status !== UserStatus.APPROVED || !user.isActive) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const newPayload: JwtPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      };
+      const newAccessToken = await this.generateAccessToken(newPayload);
+      const newRefreshToken = await this.generateRefreshToken(user.id);
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+        } catch (error) {
+        throw new UnauthorizedException('Invalid refresh token');
+        }
+      }
+
   
   
 

@@ -5,9 +5,45 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EmailModule } from './email/email.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, EmailModule],
+  imports: [
+    // Configuration
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+      expandVariables: true,
+    }),
+    // Rate Limiting
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          name: 'short',
+          ttl: config.get('THROTTLE_TTL', 60) * 1000, // Convert to milliseconds
+          limit: config.get('THROTTLE_LIMIT', 100),
+        },
+        {
+          name: 'auth',
+          ttl: 60 * 1000, // 1 minute
+          limit: 5, // 5 requests per minute for auth endpoints
+        },
+        {
+          name: 'upload',
+          ttl: 60 * 60 * 1000, // 1 hour  
+          limit: 10, // 10 file uploads per hour
+        },
+      ],
+    }),
+
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    EmailModule],
   controllers: [AppController],
   providers: [AppService],
 })

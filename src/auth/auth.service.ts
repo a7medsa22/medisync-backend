@@ -65,7 +65,7 @@ export class AuthService {
     };
   } 
 
-      async login(dto: LoginDto): Promise<AuthResponse> {
+   async login(dto: LoginDto): Promise<AuthResponse> {
     const { email, password } = dto;
 
     // Find user
@@ -105,17 +105,50 @@ export class AuthService {
       status: user.status,
     };
 
-    const access_token = this.jwtService.sign(payload);
+     const accessToken = await this.generateAccessToken(payload);
+     const refreshToken = await this.generateRefreshToken(user.id);
 
-    return {
-      access_token,
+     // Update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { updatedAt: new Date() },
+    });
+      return {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name ?? undefined,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
+        status: user.status,
+        profile: user.role === UserRole.PATIENT ? user.patient : user.doctor,
       },
+      accessToken,
+      refreshToken,
+      expiresIn: Number(this.configService.get('JWT_EXPIRES_IN', '15m')),
     };
+  }
+  
+  
+
+
+
+
+   private async generateAccessToken(payload: JwtPayload): Promise<string> {
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: this.configService.get('JWT_EXPIRES_IN', '15m'),
+    });
+  }
+  
+
+  private async generateRefreshToken(userId: string): Promise<string> {
+    const payload = { sub: userId, type: 'refresh' };
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+    });
   }
 
 }
+

@@ -84,6 +84,7 @@ export class ResetPasswordDto{
     { message: 'New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character' }
   )
   newPassword: string;
+  
   @ApiProperty({ example: '123456789012345678901234' })
   @IsNotEmpty({ message: 'Reset token is required' })
   @IsString()

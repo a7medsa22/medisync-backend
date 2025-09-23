@@ -128,8 +128,47 @@ export class AuthService {
       expiresIn: Number(this.configService.get('JWT_EXPIRES_IN', '15m')),
     };
   }
+  // validate user
+async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
-      async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+    if (user && await bcrypt.compare(password, user.password)) {
+      const { password, ...result } = user;
+      return result;
+    }
+    return null;
+  }
+   // Validate JWT payload
+  async validateJwtPayload(payload: JwtPayload): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: {
+        patient: true,
+        doctor: {
+          include: {
+            specialization: true,
+          },
+        },
+      },
+    });
+
+    if (!user || user.status !== UserStatus.APPROVED || !user.isActive) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      profile: user.role === UserRole.PATIENT ? user.patient : user.doctor,
+    };
+  }
+
+   // Refresh token
+    async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
         try {
           const payload = await this.jwtService.verifyAsync(refreshToken, {
             secret: this.configService.get('JWT_REFRESH_SECRET'),
@@ -159,11 +198,15 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
         }
       }
+     // change password
+    
 
-  
-  
-
-
+      // Logout function
+    async logout(userId: string): Promise<{ message: string }> {
+    // Here you could implement token blacklisting if needed
+    // For now, we'll just return success since JWT is stateless
+    return { message: 'Logged out successfully' };
+  }
 
 
    private async generateAccessToken(payload: JwtPayload): Promise<string> {

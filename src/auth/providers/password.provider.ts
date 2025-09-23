@@ -1,7 +1,7 @@
 
 import * as bcrypt from 'bcryptjs';
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
-import { ForgotPasswordDto, VerifyOtpDto } from '../dto/auth.dto';
+import { ForgotPasswordDto, ResetPasswordDto, VerifyOtpDto } from '../dto/auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtpProvider } from './otp.provider';
 import { ConfigService } from '@nestjs/config';

@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { EmailModule } from './email/email.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -41,10 +42,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
 
     PrismaModule,
+    ConfigModule,
     AuthModule,
     UsersModule,
-    EmailModule],
+    EmailModule
+  ],
   controllers: [AppController],
-  providers: [AppService],
+ providers: [
+    AppService,
+    // Global Guards
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

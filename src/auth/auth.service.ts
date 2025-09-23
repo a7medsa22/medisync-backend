@@ -58,5 +58,12 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     return this.passwordProvider.validateUser(email, password);
   }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string){
+    return this.passwordProvider.changePassword(userId, oldPassword, newPassword)
+  }
+  async logout(userId: string): Promise<{ message: string }> {
+    return this.loginProvider.logout(userId);
+  }
   
 }

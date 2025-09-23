@@ -123,3 +123,14 @@ export class LoginDto {
   @MinLength(1, { message: 'Password is required' })
   password: string;
 }
+export class ResendOtpDto {
+  @ApiProperty({ example: '123456789012345678901234' })
+  @IsNotEmpty({ message: 'User ID is required' })
+  @IsString()
+  userId: string;
+
+  @ApiProperty({ example: 'PATIENT' })
+  @IsNotEmpty({ message: 'Type is required' })
+  @IsString()
+  type: string;
+}

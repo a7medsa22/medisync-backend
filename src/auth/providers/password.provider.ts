@@ -111,4 +111,33 @@ export class PasswordProvider {
   }
   return null;
 }
+
+// change password with out OTP
+async changePassword(
+  userId: string, 
+  oldPassword: string, 
+  newPassword: string
+): Promise<{ message: string }> {
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new BadRequestException('User not found');
+  }
+
+  const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+  if (!isOldPasswordValid) {
+    throw new BadRequestException('Current password is incorrect');
+  }
+
+  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+
+  await this.prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedNewPassword },
+  });
+
+  return { message: 'Password changed successfully' };
+}
 }

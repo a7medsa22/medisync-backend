@@ -117,4 +117,8 @@ return {
     };
   }
 
+  async logout(userId: string): Promise<{ message: string }> {
+  return { message: 'Logged out successfully' };
+}
+
 }

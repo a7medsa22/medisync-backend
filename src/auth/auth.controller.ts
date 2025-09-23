@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Request, Param, Delete, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyOtpDto } from './dto/auth.dto';
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RefreshTokenDto, RegisterDto, ResendOtpDto, ResetPasswordDto, VerifyOtpDto } from './dto/auth.dto';
 import { Throttle } from '@nestjs/throttler';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -263,7 +264,140 @@ export class AuthController {
     return this.authService.resetPassword(body);
   }
 
-  
+  // ===============================================
+  // RESEND OTP
+  // ===============================================
 
+  @Post('resend-otp')
+  @Throttle({ auth: { limit: 3, ttl: 120000 } }) // 3 resend attempts per 2 minutes
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Resend OTP code',
+    description: 'Resend verification code for email verification, login, or password reset'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'New verification code sent',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'New verification code sent to your email.' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Rate limit exceeded or user not found' 
+  })
+  async resendOtp(@Body() body:ResendOtpDto) {
+    return this.authService.resendOtp(body.userId, body.type);
+  }
+
+  // ===============================================
+  // TOKEN MANAGEMENT
+  // ===============================================
+
+  @Post('refresh')
+  @Throttle({ auth: { limit: 10, ttl: 60000 } }) // 10 refresh attempts per minute
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Refresh access token',
+    description: 'Get new access token using valid refresh token'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Token refreshed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+            refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Invalid refresh token' 
+  })
+  async refreshToken(@Body() body: RefreshTokenDto) {
+    return this.authService.refreshToken(body.refreshToken);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'User logout',
+    description: 'Logout current user (invalidates session on client side)'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Logged out successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Logged out successfully' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Invalid or missing token' 
+  })
+  async logout(@Request() req) {
+    return this.authService.logout(req.user.id);
+  }
+
+
+  // ===============================================
+  // ACCOUNT MANAGEMENT
+  // ===============================================
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Change user password',
+    description: 'Change current user password (requires current password verification)'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password changed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Password changed successfully' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Invalid current password' 
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Invalid or missing token' 
+  })
+  async changePassword(
+    @Request() req,
+    @Body() body: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      req.user.id,
+      body.oldPassword,
+      body.newPassword,
+    );
+  }
 
 }

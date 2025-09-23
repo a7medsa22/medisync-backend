@@ -41,6 +41,9 @@ export class AuthService {
   resetPassword(dto:ResetPasswordDto){
     return this.passwordProvider.resetPassword(dto)
   }
+  verifyResetPasswordOtp(dto:VerifyOtpDto){
+    return this.passwordProvider.verifyResetPasswordOtp(dto)
+  }
 
   refreshToken(refreshToken: string){
     return this.tokenProvider.refreshToken(refreshToken)
@@ -55,4 +58,5 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     return this.passwordProvider.validateUser(email, password);
   }
+  
 }

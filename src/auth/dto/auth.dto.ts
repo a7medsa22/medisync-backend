@@ -69,6 +69,11 @@ export class ChangePasswordDto {
   )
   newPassword: string;
 }
+export class ForgotPasswordDto{
+   @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  email: string;
+}
 
 // class RefreshTokenDto
 export class RefreshTokenDto {
@@ -76,6 +81,19 @@ export class RefreshTokenDto {
   @IsString()
   @IsNotEmpty({ message: 'Refresh token is required' })
   refreshToken: string;
+}
+export class VerifyOtpDto {
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @MinLength(6, { message: 'OTP must be at least 6 digits' })
+  @MaxLength(6, { message: 'OTP must be at most 6 digits' })
+  @Matches(/^\d{6}$/, { message: 'OTP must contain only numbers' })
+  otp: string;
+
+  @ApiProperty({ example: '123456789012345678901234' })
+  @IsNotEmpty({ message: 'User ID is required' })
+  @IsString()
+  userId: string;
 }
 
 // class LoginDto

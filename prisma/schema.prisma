@@ -53,10 +53,26 @@ model User {
   // Relations
   patient         Patient?
   doctor          Doctor?
+  otps            Otp[]     // Add OTP relation
   createdAppointments Appointment[] @relation("CreatedByUser")
   
   @@map("users")
 }
+model Otp {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  type      String   // 'EMAIL_VERIFICATION', 'LOGIN_VERIFICATION', 'PASSWORD_RESET'
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("otps")
+}
+
 
 model Patient {
   id              String    @id @default(uuid())

@@ -2,7 +2,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { OtpProvider } from "./otp.provider";
 import { LoginDto, VerifyOtpDto } from "../dto/auth.dto";
 import * as bcrypt from 'bcryptjs';
-import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { UserRole, UserStatus } from "@prisma/client";
 import { JwtPayload } from "../interfaces/jwt-payload.interface";
 import { AuthResponse } from "../interfaces/auth-response.interface";
@@ -10,6 +10,7 @@ import { ConfigService } from "@nestjs/config";
 import { TokenProvider } from "./token.provider";
 
 
+@Injectable()
 export class LoginProvider {
       constructor(
     private prisma: PrismaService,

@@ -12,6 +12,7 @@ import { PasswordProvider } from './providers/password.provider';
 import { RegisterProvider } from './providers/register.provider';
 import { TokenProvider } from './providers/token.provider';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports:[
@@ -27,12 +28,11 @@ import { PrismaModule } from 'src/prisma/prisma.module';
      UsersModule,
      EmailModule,
      JwtModule,
-     PassportModule,
      PrismaModule,
      ConfigModule
   ],
   controllers: [AuthController],
-  providers: [AuthService,LoginProvider,RegisterProvider,OtpProvider,PasswordProvider,TokenProvider],
+  providers: [AuthService,JwtStrategy,LoginProvider,RegisterProvider,OtpProvider,PasswordProvider,TokenProvider],
   exports:[AuthService,JwtModule,PassportModule],
 })
 export class AuthModule {}

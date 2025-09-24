@@ -1,6 +1,6 @@
 
 import * as bcrypt from 'bcryptjs';
-import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ForgotPasswordDto, ResetPasswordDto, VerifyOtpDto } from '../dto/auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtpProvider } from './otp.provider';
@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { TokenProvider } from './token.provider';
 import { JwtService } from '@nestjs/jwt';
 
-
+@Injectable()
 export class PasswordProvider {
     constructor(
     private prisma: PrismaService,

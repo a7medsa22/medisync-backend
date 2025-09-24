@@ -25,7 +25,7 @@ import { join } from "path";
                   from: `"No Reply" <${config.get<string>('SMTP_FROM')}>`,
                 },
                 template:{
-                    dir: join(process.cwd(), 'src', 'mails', 'templates'), // 👈 خليها على src
+                    dir: join(process.cwd(), 'src', 'email', 'templates'), // 👈 خليها على src
                     adapter: new HandlebarsAdapter(),
                     options:{
                         strict:true,

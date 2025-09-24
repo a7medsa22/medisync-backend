@@ -12,7 +12,7 @@ export class EmailService {
            await this.mailerService.sendMail({
             to:email,
             subject: '🏥 MediSync - Email Verification Code',
-            template:"email.Verification",
+            template:"email-verification",
             context:{
                 firstName,otp,today
             },
@@ -30,7 +30,7 @@ export class EmailService {
            await this.mailerService.sendMail({
             to:email,
             subject: '🔐 MediSync - Login Verification Code',
-            template:"email.LoginOtp",
+            template:"email-loginotp",
             context:{
                 firstName,otp,today
             },
@@ -48,7 +48,7 @@ export class EmailService {
            await this.mailerService.sendMail({
             to:email,
             subject: '🔑 MediSync - Password Reset Code',
-            template:"email.PasswordReset",
+            template:"email-passwordreset",
             context:{
                 firstName,otp,today
             },

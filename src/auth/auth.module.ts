@@ -11,6 +11,7 @@ import { OtpProvider } from './providers/otp.provider';
 import { PasswordProvider } from './providers/password.provider';
 import { RegisterProvider } from './providers/register.provider';
 import { TokenProvider } from './providers/token.provider';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   imports:[
@@ -27,6 +28,7 @@ import { TokenProvider } from './providers/token.provider';
      EmailModule,
      JwtModule,
      PassportModule,
+     PrismaModule,
      ConfigModule
   ],
   controllers: [AuthController],

@@ -13,7 +13,7 @@ export class AuthController {
   // REGISTRATION WITH EMAIL VERIFICATION
   // ===============================================
     @Post('register')
-    @Throttle({ auth: { limit: 3, ttl: 60000 } }) 
+ // @Throttle({ auth: { limit: 3, ttl: 60000 } }) 
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Register a new user', 

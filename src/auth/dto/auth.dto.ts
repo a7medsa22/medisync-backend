@@ -99,11 +99,11 @@ export class RefreshTokenDto {
   refreshToken: string;
 }
 export class VerifyOtpDto {
-  @ApiProperty({ example: '123456' })
+  @ApiProperty({ example: '1259' })
   @IsString()
-  @MinLength(6, { message: 'OTP must be at least 6 digits' })
-  @MaxLength(6, { message: 'OTP must be at most 6 digits' })
-  @Matches(/^\d{6}$/, { message: 'OTP must contain only numbers' })
+  @MinLength(4, { message: 'OTP must be at least 4 digits' })
+  @MaxLength(4, { message: 'OTP must be at most 4 digits' })
+  @Matches(/^\d{4}$/, { message: 'OTP must contain only numbers' })
   otp: string;
 
   @ApiProperty({ example: '123456789012345678901234' })

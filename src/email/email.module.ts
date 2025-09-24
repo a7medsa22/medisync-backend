@@ -1,44 +1,40 @@
 import { Module } from '@nestjs/common';
-import { EmailService } from './email.service';
-import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-
-import { join } from "path";
+import { EmailService } from './email.service';
+import { join } from 'path';
 
 @Module({
-    imports:[MailerModule.forRootAsync({
-        inject:[ConfigService],
-        useFactory:(config:ConfigService)=>{
-            return{
-                transport:{
-                    host:config.get<string>("SMTP_HOST"),
-                    port:config.get<number>("SMTP_PORT"),
-                   secure: config.get('SMTP_PORT') === '465', // true for 465, false for other ports
-                    auth:{
-                        user:config.get<string>("SMTP_USER"),
-                        pass:config.get<string>("SMTP_PASS"),
-                    }
-                    
-                },
-                defaults:{
-                  from: `"No Reply" <${config.get<string>('SMTP_FROM')}>`,
-                },
-                template:{
-                    dir: join(process.cwd(), 'src', 'email', 'templates'), // 👈 خليها على src
-                    adapter: new HandlebarsAdapter(),
-                    options:{
-                        strict:true,
-                    }
-                
-                }
-            }
-        }
-        ,
+  imports: [
+    ConfigModule,
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('SMTP_HOST'),
+          port: parseInt(configService.get<string>('SMTP_PORT', '587')),
+          secure: configService.get<string>('SMTP_PORT') === '465',
+          auth: {
+            user: configService.get<string>('SMTP_USER'),
+            pass: configService.get<string>('SMTP_PASS'),
+          },
+        },
+        defaults: {
+          from: `"MediSync" <${configService.get<string>('SMTP_FROM')}>`,
+        },
+        template: {
+          dir: join(process.cwd(), 'dist/email/templates'), // بعد النسخ
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
+          },
+        },
+      }),
     }),
-    ConfigModule
-],
+  ],
   providers: [EmailService],
-  exports:[EmailService]
+  exports: [EmailService],
 })
 export class EmailModule {}

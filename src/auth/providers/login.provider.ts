@@ -22,7 +22,7 @@ async login(dto: LoginDto): Promise<{ message: string; userId: string; requiresO
     const { email, password } = dto;
 
     // Find user
-     const user = await this.prisma.user.findUniqueOrThrow({
+     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
         patient: true,
@@ -33,6 +33,9 @@ async login(dto: LoginDto): Promise<{ message: string; userId: string; requiresO
         },
       },
     });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
 
 
     // Verify password

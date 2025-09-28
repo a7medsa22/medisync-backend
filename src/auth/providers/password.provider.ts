@@ -28,7 +28,7 @@ export class PasswordProvider {
     if (!user) {
       // Don't reveal if email exists or not for security
       return {
-        message: 'If this email exists, you will receive a password reset code.',
+        message: 'If an account with this email exists, a reset code has been sent.',
         userId: '',
       };
     }
@@ -37,7 +37,7 @@ export class PasswordProvider {
     await this.otp.generateAndSendOtp(user.id, 'PASSWORD_RESET');
 
     return {
-      message: 'Password reset code sent to your email.',
+      message: 'If an account with this email exists, a reset code has been sent.',
       userId: user.id,
     };
   }
@@ -90,7 +90,7 @@ export class PasswordProvider {
 
       // Clean up any existing OTPs for this user
       await this.prisma.otp.deleteMany({
-        where: { userId },
+        where: { userId, type: 'PASSWORD_RESET' },
       });
 
       return {

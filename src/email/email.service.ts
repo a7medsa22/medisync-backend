@@ -23,21 +23,6 @@ export class EmailService {
     }
   }
 
-  async sendLoginOtp(email: string, firstName: string, otp: string): Promise<void> {
-    try {
-      const today = new Date().getFullYear();
-      await this.mailerService.sendMail({
-        to: email,
-        subject: '🔐 MediSync - Login Verification Code',
-        template: 'email-loginotp',
-        context: { firstName, otp, today },
-      });
-      this.logger.log(`Login OTP sent to ${email}`);
-    } catch (error) {
-      this.logger.error(`Failed to send login OTP to ${email}`, error);
-      throw error;
-    }
-  }
 
   async sendPasswordResetOtp(email: string, firstName: string, otp: string): Promise<void> {
     try {

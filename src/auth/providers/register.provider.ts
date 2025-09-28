@@ -77,6 +77,7 @@ export class RegisterProvider {
       where: { id: userId },
       data: { 
         status: UserStatus.PENDING, // Still needs admin approval
+        isActive: true,
         // Add email verification flag if needed
       },
     });

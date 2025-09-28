@@ -1,13 +1,11 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EmailModule } from './email/email.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 
 @Module({
@@ -47,9 +45,11 @@ import { APP_GUARD } from '@nestjs/core';
     UsersModule,
     EmailModule
   ],
-  controllers: [AppController],
  providers: [
-    AppService,
+  {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
     // Global Guards
     {
       provide: APP_GUARD,

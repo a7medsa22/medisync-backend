@@ -86,55 +86,15 @@ export class AuthController {
     }
 
   // ===============================================
-  // LOGIN WITH OTP VERIFICATION
+  // LOGIN
   // ===============================================
 
-   @Post('login')
+  @Post('login')
   @Throttle({ auth: { limit: 5, ttl: 60000 } }) 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
-    summary: 'User login (Step 1)',
-    description: 'Authenticate user credentials and send OTP to email for verification'
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Credentials verified, OTP sent to email',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Please check your email for verification code to complete login.' },
-        data: {
-          type: 'object',
-          properties: {
-            userId: { type: 'string', example: 'uuid-string' },
-            requiresOtp: { type: 'boolean', example: true }
-          }
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Invalid credentials or account not approved',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        message: { type: 'array', items: { type: 'string' }, example: ['Invalid credentials'] }
-      }
-    }
-  })
-  async login(@Body() body: LoginDto) {
-    return this.authService.login(body);
-  }
-
-  @Post('verify-login')
-  @Throttle({ auth: { limit: 5, ttl: 60000 } }) 
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Verify login OTP (Step 2)',
-    description: 'Complete login process by verifying the OTP sent to email'
+    summary: 'User login',
+    description:'aut'
   })
   @ApiResponse({ 
     status: 200, 
@@ -166,14 +126,24 @@ export class AuthController {
     }
   })
   @ApiResponse({ 
+    status: 401, 
+    description: 'Invalid credentials or account not approved',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        message: { type: 'array', items: { type: 'string' }, example: ['Invalid credentials'] }
+      }
+    }
+  })
+    @ApiResponse({ 
     status: 400, 
     description: 'Invalid or expired verification code' 
   })
-  async verifyLogin(@Body() body: VerifyOtpDto) {
-    return this.authService.verifyLoginOtp(body);
+  async login(@Body() body: LoginDto) {
+    return this.authService.login(body);
   }
 
-  
   // ===============================================
   // FORGOT PASSWORD WITH OTP
   // ===============================================

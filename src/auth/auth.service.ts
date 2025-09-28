@@ -30,9 +30,6 @@ export class AuthService {
     return this.loginProvider.login(dto)
   }
   
-  verifyLoginOtp(dto:VerifyOtpDto){
-    return this.loginProvider.verifyLoginOtp(dto)
-  }
 
   forgotPassword(dto:ForgotPasswordDto){
     return this.passwordProvider.forgotPassword(dto)

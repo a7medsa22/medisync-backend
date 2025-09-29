@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User, Prisma, UserRole, UserStatus } from '@prisma/client';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 export type UserWithoutPassword = Omit<User, 'password'>;
 
 
@@ -143,7 +144,8 @@ export class UsersService {
 
  // ---------- Admin Management
     
-    async getAllUsers(page = 1, limit = 10, role?: UserRole, status?: UserStatus) {
+    async getAllUsers(query:UserQueryDto) {
+    const { page = 1, limit = 10, role, status } = query;
     const skip = (page - 1) * limit;
     const where: any = { ...(role && { role }), ...(status && { status }) };
 

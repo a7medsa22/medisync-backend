@@ -19,6 +19,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator'; // Add this import
 import { CompleteProfileDto } from 'src/auth/dto/auth.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -188,13 +189,8 @@ export class UsersController {
       }
     }
   })
-  getAllUsers(
-    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
-    @Query('role') role?: UserRole,
-    @Query('status') status?: UserStatus,
-  ) {
-    return this.usersService.getAllUsers(page, limit, role, status);
+  getAllUsers( @Query() query:UserQueryDto,) {
+    return this.usersService.getAllUsers(query);
   }
 
   @Get('stats')

@@ -2,6 +2,8 @@ import { IsEmail, IsString, IsOptional, IsEnum, MinLength, MaxLength, Matches, I
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { PasswordMatch } from 'src/common/validators/password-match.validator';
+import { IsEgyptianPhoneNumber } from 'src/common/validators/phone-number.validator';
+import { IsEgyptianNationalId } from 'src/common/validators/egyptian-national-id.validator';
 
 export class RegisterInitDto {
   @ApiProperty({ 
@@ -44,6 +46,7 @@ export class RegisterBasicDto {
   @IsNotEmpty()
   @MinLength(2, { message: 'First name must be at least 2 characters long' })
   @MaxLength(50, { message: 'First name must not exceed 50 characters' })
+  @Matches(/^[a-zA-ZÀ-ÿ\u0600-\u06FF\s]+$/, { message: 'First name can only contain letters and spaces' })
   firstName: string;
 
   @ApiProperty({ example: 'Doe' })
@@ -51,6 +54,7 @@ export class RegisterBasicDto {
   @IsNotEmpty()
   @MinLength(2, { message: 'Last name must be at least 2 characters long' })
   @MaxLength(50, { message: 'Last name must not exceed 50 characters' })
+  @Matches(/^[a-zA-ZÀ-ÿ\u0600-\u06FF\s]+$/, { message: 'Last name can only contain letters and spaces' })
   lastName: string;
 }
 export class RegisterVerifyEmailDto {
@@ -69,16 +73,21 @@ export class RegisterVerifyEmailDto {
 }
 
 export class CompleteProfileDto {
-  @ApiProperty({ example: '+201234567890' })
+  @ApiProperty({ 
+    example: '+201234567890',
+    description: 'Egyptian phone number (mobile or landline)'
+  })
   @IsString()
   @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Please provide a valid phone number' })
+  @IsEgyptianPhoneNumber({ message: 'Please provide a valid Egyptian phone number' })
   phone: string;
 
-  @ApiProperty({ example: '12345678901234' })
+  @ApiProperty({ 
+    example: '29001011234567',
+    description: '14-digit Egyptian National ID'
+  })
   @IsString()
-  @MinLength(14, { message: 'National ID must be exactly 14 digits' })
-  @MaxLength(14, { message: 'National ID must be exactly 14 digits' })
-  @Matches(/^\d{14}$/, { message: 'National ID must contain only numbers' })
+  @IsEgyptianNationalId({ message: 'Please provide a valid Egyptian National ID' })
   nationalId: string;
 
   // Doctor-specific field
@@ -89,6 +98,8 @@ export class CompleteProfileDto {
   })
   @IsOptional()
   @IsString()
+  @MinLength(5, { message: 'Medical card number must be at least 5 characters long' })
+  @MaxLength(20, { message: 'Medical card number must not exceed 20 characters' })
   medicalCardNumber?: string;
 }
 

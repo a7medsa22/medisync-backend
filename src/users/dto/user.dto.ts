@@ -4,8 +4,8 @@ import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsDateString, IsEmail, IsEnum, IsNumber, IsObject, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class UserProfileResponseDto {
-  @ApiProperty({ example: 'uuid-from-init-step'})
-  @IsString()
+  @ApiProperty({ example: 'uuid-from-init-step', description: 'User ID' })
+  @IsString() 
   id: string;
 
   @ApiProperty({ example: 'user@example.com' })
@@ -21,6 +21,8 @@ export class UserProfileResponseDto {
   lastName: string;
 
   @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   phone?: string;
 
   @ApiProperty({ required: false })

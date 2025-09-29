@@ -12,12 +12,12 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { UsersService } from './users.service';
 import { AuthService } from '../auth/auth.service'; // Add this import
-import { CompleteProfileDto } from '../auth/dto/complete-profile.dto'; // Add this import
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ApiAuth } from '../common/decorators/api-auth.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator'; // Add this import
+import { CompleteProfileDto } from 'src/auth/dto/auth.dto';
 
 @ApiTags('Users')
 @Controller('users')

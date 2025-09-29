@@ -7,8 +7,9 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UserRole, UserStatus } from '@prisma/client';
 import { UsersService } from './users.service';
 import { AuthService } from '../auth/auth.service'; // Add this import
@@ -70,16 +71,47 @@ export class UsersController {
 
   @Get('profile')
   @ApiAuth()
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
+  @ApiOperation({ 
+    summary: 'Get Current User Profile',
+    description: 'Get complete profile information for the authenticated user'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Profile retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            phone: { type: 'string' },
+            nationalId: { type: 'string' },
+            role: { type: 'string', enum: ['PATIENT', 'DOCTOR', 'ADMIN'] },
+            status: { type: 'string', enum: ['INIT', 'PENDING_EMAIL_VERIFICATION', 'EMAIL_VERIFIED', 'ACTIVE', 'INACTIVE', 'SUSPENDED'] },
+            isProfileComplete: { type: 'boolean' },
+            profile: { type: 'object', description: 'Role-specific profile (Patient or Doctor)' }
+          }
+        }
+      }
+    }
+  })
   async getProfile(@CurrentUser('id') userId: string) {
     return this.usersService.getProfile(userId);
   }
 
   @Put('profile')
   @ApiAuth()
-  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiOperation({ 
+    summary: 'Update Current User Profile',
+    description: 'Update profile information for the authenticated user'
+  })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
   async updateProfile(
     @CurrentUser('id') userId: string,
     @Body() body: UpdateProfileDto,
@@ -87,43 +119,171 @@ export class UsersController {
     return this.usersService.updateProfile(userId, body);
   }
 
-  @Get()
+  @Get('registration-status')
+  @Public()
+  @ApiOperation({
+    summary: 'Get User Registration Status',
+    description: 'Check the registration progress for a specific user'
+  })
+  @ApiQuery({ name: 'userId', required: true, type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Registration status retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            user: { type: 'object' },
+            nextStep: { type: 'string', example: 'Complete profile information (Step 4)' },
+            isComplete: { type: 'boolean', example: false }
+          }
+        }
+      }
+    }
+  })
+  getUserRegistrationStatus(@Query('userId', ParseUUIDPipe) userId: string) {
+    return this.usersService.getUserRegistrationStatus(userId);
+  }
+
+    // ===============================================
+  // ADMIN ENDPOINTS (User Management)
+  // ===============================================
+
+@Get()
   @ApiAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get all users (Admin only)' })
-  async getAllUsers(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+  @ApiOperation({ 
+    summary: 'Get All Users (Admin only)',
+    description: 'Retrieve all users with filtering and pagination options'
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'role', required: false, enum: UserRole })
+  @ApiQuery({ name: 'status', required: false, enum: UserStatus })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            users: { type: 'array', items: { type: 'object' } },
+            pagination: {
+              type: 'object',
+              properties: {
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                total: { type: 'number' },
+                pages: { type: 'number' }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  getAllUsers(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
     @Query('role') role?: UserRole,
     @Query('status') status?: UserStatus,
   ) {
     return this.usersService.getAllUsers(page, limit, role, status);
   }
 
-  @Put(':id/deactivate')
+  @Get('stats')
   @ApiAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Deactivate user (Admin only)' })
-  async deactivateUser(
-    @Param('id', ParseUUIDPipe) userId: string,
-    @CurrentUser('id') currentUserId: string,
-  ) {
-    return this.usersService.deactivateUser(userId, currentUserId);
+  @ApiOperation({ 
+    summary: 'Get User Statistics (Admin only)',
+    description: 'Get comprehensive statistics about users in the system'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            totalUsers: { type: 'number', example: 150 },
+            activeUsers: { type: 'number', example: 120 },
+            registrationFlow: {
+              type: 'object',
+              properties: {
+                init: { type: 'number' },
+                pendingEmail: { type: 'number' },
+                emailVerified: { type: 'number' },
+                completed: { type: 'number' }
+              }
+            },
+            byRole: {
+              type: 'object',
+              properties: {
+                patients: { type: 'number' },
+                doctors: { type: 'number' },
+                admins: { type: 'number' }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  async getUserStats() {
+    return this.usersService.getUserStats();
+  }
+
+   @Get(':id')
+  @ApiAuth()
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
+  @ApiOperation({
+    summary: 'Get User by ID (Admin/Doctor)',
+    description: 'Get detailed information about a specific user'
+  })
+  @ApiResponse({ status: 200, description: 'User found' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  getUserById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.findById(id);
   }
 
   @Put(':id/activate')
   @ApiAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Activate user (Admin only)' })
-  async activateUser(@Param('id', ParseUUIDPipe) userId: string) {
+  @ApiOperation({ 
+    summary: 'Activate User (Admin only)',
+    description: 'Activate a user account that was previously deactivated'
+  })
+  @ApiResponse({ status: 200, description: 'User activated successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  activateUser(@Param('id', ParseUUIDPipe) userId: string) {
     return this.usersService.activateUser(userId);
   }
 
-  @Get('stats')
+  @Put(':id/deactivate')
   @ApiAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get user statistics (Admin only)' })
-  async getUserStats() {
-    return this.usersService.getUserStats();
+  @ApiOperation({ 
+    summary: 'Deactivate User (Admin only)',
+    description: 'Deactivate a user account (cannot deactivate your own account)'
+  })
+  @ApiResponse({ status: 200, description: 'User deactivated successfully' })
+  @ApiResponse({ status: 403, description: 'Cannot deactivate own account' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  deactivateUser(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.usersService.deactivateUser(userId, currentUserId);
   }
 }
+
+  

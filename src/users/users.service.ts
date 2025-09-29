@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User, Prisma, UserRole, UserStatus } from '@prisma/client';
-import { UpdateProfileDto } from './dto/user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 export type UserWithoutPassword = Omit<User, 'password'>;
 
 

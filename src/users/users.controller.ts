@@ -17,7 +17,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator'; // Add this import
 import { CompleteProfileDto } from 'src/auth/dto/auth.dto';
-import { UpdateProfileDto } from './dto/user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @ApiTags('Users')
 @Controller('users')

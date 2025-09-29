@@ -1,6 +1,7 @@
 import { IsEmail, IsString, IsOptional, IsEnum, MinLength, MaxLength, Matches, IsPhoneNumber, IsNotEmpty, IsUUID, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
+import { PasswordMatch } from 'src/common/validators/password-match.validator';
 
 export class RegisterInitDto {
   @ApiProperty({ 
@@ -14,7 +15,7 @@ export class RegisterInitDto {
 
 export class RegisterBasicDto {
   @ApiProperty({ example: 'uuid-from-init-step' })
-  @IsUUID()
+  @IsUUID(4, { message: 'Invalid temporary user ID format' })
   @IsNotEmpty()
   tempUserId: string;
 
@@ -34,8 +35,8 @@ export class RegisterBasicDto {
   password: string;
 
   @ApiProperty({ example: 'SecurePass123!' })
-  @IsString()
   @IsNotEmpty()
+  @PasswordMatch('password', { message: 'Password confirmation must match password' })
   confirmPassword: string;
 
   @ApiProperty({ example: 'John' })

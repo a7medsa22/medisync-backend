@@ -9,15 +9,15 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { UserRole, UserStatus } from '@prisma/client';
 import { UsersService } from './users.service';
 import { AuthService } from '../auth/auth.service'; // Add this import
-import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ApiAuth } from '../common/decorators/api-auth.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator'; // Add this import
 import { CompleteProfileDto } from 'src/auth/dto/auth.dto';
+import { UpdateProfileDto } from './dto/user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -59,9 +59,9 @@ export class UsersController {
   @ApiResponse({ status: 409, description: 'National ID already registered' })
   async completeProfile(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() completeProfileDto: CompleteProfileDto,
+    @Body() body: CompleteProfileDto,
   ) {
-    return this.authService.completeUserProfile(id, completeProfileDto);
+    return this.authService.completeUserProfile(id, body);
   }
 
   // ===============================================
@@ -82,9 +82,9 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   async updateProfile(
     @CurrentUser('id') userId: string,
-    @Body() updateProfileDto: UpdateProfileDto,
+    @Body() body: UpdateProfileDto,
   ) {
-    return this.usersService.updateProfile(userId, updateProfileDto);
+    return this.usersService.updateProfile(userId, body);
   }
 
   @Get()
@@ -95,7 +95,7 @@ export class UsersController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('role') role?: UserRole,
-    @Query('status') status?: string,
+    @Query('status') status?: UserStatus,
   ) {
     return this.usersService.getAllUsers(page, limit, role, status);
   }

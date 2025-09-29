@@ -72,7 +72,7 @@ export class UsersController {
 
   @Get('profile')
   @ApiAuth()
-  @ApiOperation({ 
+    @ApiOperation({ 
     summary: 'Get Current User Profile',
     description: 'Get complete profile information for the authenticated user'
   })
@@ -153,7 +153,7 @@ export class UsersController {
   // ADMIN ENDPOINTS (User Management)
   // ===============================================
 
-@Get()
+  @Get()
   @ApiAuth()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ 

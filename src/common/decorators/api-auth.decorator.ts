@@ -7,7 +7,7 @@ import { ApprovedUserGuard } from "src/auth/guards/status.guard";
 export function ApiAuth(){
     return applyDecorators(
         UseGuards(JwtAuthGuard,ApprovedUserGuard,RolesGuard),
-        ApiBearerAuth('jwt-auth'),
-       ApiUnauthorizedResponse({ description: 'Unauthorized access' }),
+        ApiBearerAuth('JWT-auth'),
+        ApiUnauthorizedResponse({ description: 'Unauthorized access' }),
     );
 }

@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole, UserStatus } from '@prisma/client';
 import { OtpProvider } from './otp.provider';
+import { use } from 'passport';
 
 
 @Injectable()
@@ -211,9 +212,9 @@ export class RegisterProvider {
 
     return {
       data: {
-        message: 'Profile completed successfully.',
+        message: 'Profile completed successfully. Please wait for admin approval.',
         userId: updatedUser.id,
-        status: 'ACTIVE',
+        status: updatedUser.status,
       },
     };
   }

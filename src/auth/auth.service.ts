@@ -1,11 +1,11 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { LoginProvider } from "./providers/login.provider";
 import { OtpProvider } from "./providers/otp.provider";
 import { PasswordProvider } from "./providers/password.provider";
 import { RegisterProvider } from "./providers/register.provider";
 import { TokenProvider } from "./providers/token.provider";
-import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyOtpDto } from "./dto/auth.dto";
-import { UserRole, UserStatus } from "@prisma/client";
+import { CompleteProfileDto, ForgotPasswordDto, LoginDto, RegisterBasicDto, RegisterInitDto, RegisterVerifyEmailDto, ResetPasswordDto, VerifyOtpDto } from "./dto/auth.dto";
+import { UserRole } from "@prisma/client";
 import { JwtPayload } from "./interfaces/jwt-payload.interface";
 import { PrismaService } from "src/prisma/prisma.service";
 
@@ -19,12 +19,19 @@ export class AuthService {
     private tokenProvider: TokenProvider,
     private prisma:PrismaService
   ) {}
-  register(dto: RegisterDto){
-    return this.registerProvider.signUp(dto)
+  registerInit(dto: RegisterInitDto){
+    return this.registerProvider.registerInit(dto)
   } 
-  verifyRegistrationOtp(dto:VerifyOtpDto){
-    return this.registerProvider.verifyRegistrationOtp(dto)
-  }
+  registerBasic(dto: RegisterBasicDto){
+    return this.registerProvider.registerBasic(dto)
+  } 
+  registerVerifyEmail(dto: RegisterVerifyEmailDto){
+    return this.registerProvider.registerVerifyEmail(dto)
+  } 
+  completeUserProfile(userId:string ,dto: CompleteProfileDto){
+    return this.registerProvider.completeUserProfile(userId,dto)
+  } 
+
 
   login(dto: LoginDto){
     return this.loginProvider.login(dto)
@@ -45,7 +52,7 @@ export class AuthService {
   refreshToken(refreshToken: string){
     return this.tokenProvider.refreshToken(refreshToken)
   }
-  resendOtp(userId: string, type: string) {
+  resendOtp(userId: string, type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET') {
     return this.otpProvider.resendOtp(userId, type);
   }
 

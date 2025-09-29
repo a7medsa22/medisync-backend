@@ -176,8 +176,8 @@ export class ResendOtpDto {
   @IsString()
   userId: string;
 
-  @ApiProperty({ example: 'PATIENT' })
+  @ApiProperty({ example: 'EMAIL_VERIFICATION' })
   @IsNotEmpty({ message: 'Type is required' })
-  @IsEnum(UserRole, { message: 'Type must be either PATIENT, DOCTOR, or ADMIN' })
-  type: UserRole;
+  @IsEnum(['EMAIL_VERIFICATION', 'PASSWORD_RESET'], { message: 'Type must be either EMAIL_VERIFICATION or PASSWORD_RESET' })
+  type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
 }

@@ -43,11 +43,11 @@ export class LoginProvider {
     }
 
     // Check account status
-    if (user.status !== UserStatus.APPROVED) {
-      throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}. Please contact support.`);
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}. Please complete your registration.`);
     }
 
-    if (!user.isActive) {
+    if (!user.isActive || !user.isProfileComplete) {
       throw new UnauthorizedException('Account is deactivated. Please contact support.');
     }
 
@@ -78,7 +78,7 @@ export class LoginProvider {
         status: user.status,
         profile: user.role === UserRole.PATIENT ? user.patient : user.doctor,
       },
-      accessToken,
+      accessToken,  
       refreshToken,
       expiresIn: Number(this.configService.get('JWT_EXPIRES_IN', '15m')),
     };

@@ -13,6 +13,11 @@ export class RegisterProvider {
     private otp: OtpProvider,
   ) {}
 
+   /**
+    * 
+    * @param dto RegisterInitDto 
+    * @returns { success: boolean; message: string; data: { tempUserId: string; role: UserRole; status: string } }
+    */
   async registerInit(dto: RegisterInitDto): Promise<{ 
     success: boolean; 
     message: string; 
@@ -46,10 +51,13 @@ export class RegisterProvider {
     };
   }
 
+   /**
+    * 
+    * @param dto RegisterBasicDto 
+    * @returns { success: boolean; message: string; data: { userId: string; status: string } }
+    */
   async registerBasic(dto: RegisterBasicDto): Promise<{
-    success: boolean;
-    message: string;
-    data: { userId: string; status: string };
+    data: { userId: string; status: string ,message: string}
   }> {
     const { tempUserId, email, password, confirmPassword, firstName, lastName } = dto;
 
@@ -99,19 +107,20 @@ export class RegisterProvider {
     await this.otp.generateAndSendOtp(updatedUser.id, 'EMAIL_VERIFICATION');
 
     return {
-      success: true,
-      message: 'Basic info saved. Please verify your email.',
-      data: {
-        userId: updatedUser.id,
-        status: 'PENDING_EMAIL_VERIFICATION',
-      },
+      
+     data:{ userId: updatedUser.id,
+      status: 'PENDING_EMAIL_VERIFICATION',
+      message: 'Basic info saved. Please verify your email.', }
     };
   }
-   
+
+   /**
+    * 
+    * @param dto RegisterVerifyEmailDto 
+    * @returns { success: boolean; message: string; data: { userId: string; status: string } }
+    */
    async registerVerifyEmail(dto: RegisterVerifyEmailDto): Promise<{
-    success: boolean;
-    message: string;
-    data: { userId: string; status: string };
+    data: { userId: string; status: string ,message: string}
   }> {
     const { userId, otp } = dto;
 
@@ -131,20 +140,22 @@ export class RegisterProvider {
     });
 
    return {
-      success: true,
-      message: 'Email verified successfully.',
       data: {
         userId,
         status: 'EMAIL_VERIFIED',
+        message: 'Email verified successfully. Please complete your profile.',  
       },
     };
   }
-
-
-async completeUserProfile(userId: string, dto: CompleteProfileDto): Promise<{
-    success: boolean;
-    message: string;
-    data: { userId: string; status: string };
+   
+   /**
+    * (Step 4)
+    * @param userId string 
+    * @param dto CompleteProfileDto 
+    * @returns { success: boolean; message: string; data: { userId: string; status: string } }
+    */
+  async completeUserProfile(userId: string, dto: CompleteProfileDto): Promise<{
+    data: { userId: string; status: string, message: string };
   }> {
     const { phone, nationalId, medicalCardNumber } = dto;
 
@@ -202,9 +213,8 @@ async completeUserProfile(userId: string, dto: CompleteProfileDto): Promise<{
     }
 
     return {
-      success: true,
-      message: 'Profile completed successfully.',
       data: {
+        message: 'Profile completed successfully.',
         userId: updatedUser.id,
         status: 'ACTIVE',
       },

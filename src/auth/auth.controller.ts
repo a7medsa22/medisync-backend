@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Request, Param, Delete, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Request, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RefreshTokenDto, RegisterDto, ResendOtpDto, ResetPasswordDto, VerifyOtpDto } from './dto/auth.dto';
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RefreshTokenDto, RegisterBasicDto, RegisterInitDto, RegisterVerifyEmailDto, ResendOtpDto, ResetPasswordDto, VerifyOtpDto } from './dto/auth.dto';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -12,52 +12,75 @@ export class AuthController {
   // ===============================================
   // REGISTRATION WITH EMAIL VERIFICATION
   // ===============================================
-    @Post('register')
- // @Throttle({ auth: { limit: 3, ttl: 60000 } }) 
+    @Post('register/init')
+  @Throttle({ auth: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
-    summary: 'Register a new user', 
-    description: 'Register a new user account. An email verification code will be sent to the provided email address.' 
+    summary: 'Step 1: Role Selection', 
+    description: 'Initialize registration by selecting user role (Patient, Doctor, etc.)' 
   })
   @ApiResponse({ 
     status: 201, 
-    description: 'User registered successfully, verification code sent to email',
+    description: 'Role selected successfully',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Registration successful. Please check your email for verification code.' },
+        message: { type: 'string', example: 'Role selected. Proceed with registration.' },
         data: {
           type: 'object',
           properties: {
-            userId: { type: 'string', example: 'uuid-string' }
+            tempUserId: { type: 'string', example: 'uuid-string' },
+            role: { type: 'string', example: 'PATIENT' },
+            status: { type: 'string', example: 'INIT' }
           }
         }
       }
     }
   })
+  @ApiResponse({ status: 400, description: 'Invalid role selection' })
+  async registerInit(@Body() registerInitDto: RegisterInitDto) {
+    return this.authService.registerInit(registerInitDto);
+  }
+
+
+   @Post('register/basic')
+  @Throttle({ auth: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ 
+    summary: 'Step 2: Basic Information', 
+    description: 'Add basic user information (email, password, name) and send email verification OTP' 
+  })
   @ApiResponse({ 
-    status: 409, 
-    description: 'Email or National ID already exists',
+    status: 201, 
+    description: 'Basic info saved and verification email sent',
     schema: {
       type: 'object',
       properties: {
-        success: { type: 'boolean', example: false },
-        message: { type: 'array', items: { type: 'string' }, example: ['Email already registered'] }
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Basic info saved. Please verify your email.' },
+        data: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', example: 'uuid-string' },
+            status: { type: 'string', example: 'PENDING_EMAIL_VERIFICATION' }
+          }
+        }
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'Validation error' })
-    async register(@Body() body: RegisterDto) {
-      return this.authService.register(body);
-    }
+  @ApiResponse({ status: 400, description: 'Validation error or passwords do not match' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  async registerBasic(@Body() registerBasicDto: RegisterBasicDto) {
+    return this.authService.registerBasic(registerBasicDto);
+  }
 
-    @Post('verify-registration')
-    @Throttle({ auth: { limit: 5, ttl: 60000 } }) 
+  @Post('register/verify-email')
+  @Throttle({ auth: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
-    summary: 'Verify registration email with OTP',
-    description: 'Verify the email address using the 4-digit code sent during registration'
+    summary: 'Step 3: Email Verification', 
+    description: 'Verify email address using 4-digit OTP sent to email' 
   })
   @ApiResponse({ 
     status: 200, 
@@ -66,24 +89,21 @@ export class AuthController {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Email verified successfully. Your account is pending admin approval.' }
+        message: { type: 'string', example: 'Email verified successfully.' },
+        data: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', example: 'uuid-string' },
+            status: { type: 'string', example: 'EMAIL_VERIFIED' }
+          }
+        }
       }
     }
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Invalid or expired verification code',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        message: { type: 'array', items: { type: 'string' }, example: ['Invalid or expired verification code'] }
-      }
-    }
-  })
-    async verifyRegistration(@Body() body: VerifyOtpDto) {
-      return this.authService.verifyRegistrationOtp(body);
-    }
+  @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
+  async registerVerifyEmail(@Body() registerVerifyEmailDto: RegisterVerifyEmailDto) {
+    return this.authService.registerVerifyEmail(registerVerifyEmailDto);
+  }
 
   // ===============================================
   // LOGIN
@@ -103,22 +123,20 @@ export class AuthController {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Login successful.' },
         data: {
           type: 'object',
           properties: {
+            accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+            refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
             user: {
               type: 'object',
               properties: {
-                id: { type: 'string' },
-                email: { type: 'string' },
-                firstName: { type: 'string' },
-                lastName: { type: 'string' },
-                role: { type: 'string', enum: ['PATIENT', 'DOCTOR', 'ADMIN'] },
-                status: { type: 'string', enum: ['APPROVED'] }
-              }
+                id: { type: 'string', example: 'uuid-string' },
+                role: { type: 'string', example: 'PATIENT' },
+                status: { type: 'string', example: 'ACTIVE' }
+              },
             },
-            accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
-            refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
             expiresIn: { type: 'string', example: '15m' }
           }
         }

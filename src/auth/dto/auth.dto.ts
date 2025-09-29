@@ -1,14 +1,30 @@
-import { IsEmail, IsString, IsOptional, IsEnum, MinLength, MaxLength, Matches, IsPhoneNumber, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsEnum, MinLength, MaxLength, Matches, IsPhoneNumber, IsNotEmpty, IsUUID, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
-export class RegisterDto {
+export class RegisterInitDto {
+  @ApiProperty({ 
+    enum: UserRole, 
+    example: UserRole.PATIENT,
+    description: 'User role selection'
+  })
+  @IsEnum(UserRole, { message: 'Role must be either PATIENT, DOCTOR, or ADMIN' })
+  role: UserRole;
+}
+
+export class RegisterBasicDto {
+  @ApiProperty({ example: 'uuid-from-init-step' })
+  @IsUUID()
+  @IsNotEmpty()
+  tempUserId: string;
+
   @ApiProperty({ example: 'john.doe@example.com' })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
-  @ApiProperty({ example: 'SecurePass123!', minLength: 8 })
+  @ApiProperty({ example: 'SecurePass123!' })
   @IsString()
+  @IsNotEmpty()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   @MaxLength(128, { message: 'Password must not exceed 128 characters' })
   @Matches(
@@ -17,39 +33,75 @@ export class RegisterDto {
   )
   password: string;
 
+  @ApiProperty({ example: 'SecurePass123!' })
+  @IsString()
+  @IsNotEmpty()
+  confirmPassword: string;
+
   @ApiProperty({ example: 'John' })
   @IsString()
+  @IsNotEmpty()
   @MinLength(2, { message: 'First name must be at least 2 characters long' })
   @MaxLength(50, { message: 'First name must not exceed 50 characters' })
   firstName: string;
 
   @ApiProperty({ example: 'Doe' })
-  @IsString()
+  @IsString() 
+  @IsNotEmpty()
   @MinLength(2, { message: 'Last name must be at least 2 characters long' })
   @MaxLength(50, { message: 'Last name must not exceed 50 characters' })
   lastName: string;
+}
+export class RegisterVerifyEmailDto {
+  @ApiProperty({ example: 'uuid-from-basic-step' })
+  @IsUUID()
+  userId: string;
 
-  @ApiProperty({ example: '+201234567890', required: false })
-  @IsOptional()
+  @ApiProperty({ 
+    example: '1234',
+    description: '4-digit verification code sent to email'
+  })
   @IsString()
-  @Matches(
-    /^\+?[1-9]\d{1,14}$/,
-    { message: 'Please provide a valid phone number' }
-  )
-  phone?: string;
+  @Length(4, 4, { message: 'OTP must be exactly 4 digits' })
+  @Matches(/^\d{4}$/, { message: 'OTP must contain only numbers' })
+  otp: string;
+}
 
-  @ApiProperty({ example: '12345678901234', required: false })
-  @IsOptional()
+export class CompleteProfileDto {
+  @ApiProperty({ example: '+201234567890' })
+  @IsString()
+  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Please provide a valid phone number' })
+  phone: string;
+
+  @ApiProperty({ example: '12345678901234' })
   @IsString()
   @MinLength(14, { message: 'National ID must be exactly 14 digits' })
   @MaxLength(14, { message: 'National ID must be exactly 14 digits' })
   @Matches(/^\d{14}$/, { message: 'National ID must contain only numbers' })
-  nationalId?: string;
+  nationalId: string;
 
-  @ApiProperty({ enum: UserRole, example: UserRole.PATIENT, required: false })
+  // Doctor-specific field
+  @ApiProperty({ 
+    example: 'DOC-56789', 
+    required: false,
+    description: 'Required for doctors only'
+  })
   @IsOptional()
-  @IsEnum(UserRole, { message: 'Role must be either PATIENT, DOCTOR, or ADMIN' })
-  role?: UserRole;
+  @IsString()
+  medicalCardNumber?: string;
+}
+
+export class LoginDto {
+  @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: 'SecurePass123!' })
+  @IsString()
+  @MinLength(1, { message: 'Password is required' })
+  @IsNotEmpty()
+  password: string;
 }
 
 // class ChangePasswordDto
@@ -57,7 +109,10 @@ export class ChangePasswordDto {
   @ApiProperty({ example: 'currentPassword123!' })
   @IsString()
   @MinLength(1, { message: 'Current password is required' })
+  @IsNotEmpty()
   oldPassword: string;
+
+
 
   @ApiProperty({ example: 'NewSecurePass456!', minLength: 8 })
   @IsString()
@@ -67,6 +122,7 @@ export class ChangePasswordDto {
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
     { message: 'New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character' }
   )
+  @IsNotEmpty()
   newPassword: string;
 }
 export class ForgotPasswordDto{
@@ -113,16 +169,7 @@ export class VerifyOtpDto {
 }
 
 // class LoginDto
-export class LoginDto {
-  @ApiProperty({ example: 'john.doe@example.com' })
-  @IsEmail({}, { message: 'Please provide a valid email address' })
-  email: string;
 
-  @ApiProperty({ example: 'SecurePass123!' })
-  @IsString()
-  @MinLength(1, { message: 'Password is required' })
-  password: string;
-}
 export class ResendOtpDto {
   @ApiProperty({ example: '123456789012345678901234' })
   @IsNotEmpty({ message: 'User ID is required' })
@@ -131,6 +178,6 @@ export class ResendOtpDto {
 
   @ApiProperty({ example: 'PATIENT' })
   @IsNotEmpty({ message: 'Type is required' })
-  @IsString()
-  type: string;
+  @IsEnum(UserRole, { message: 'Type must be either PATIENT, DOCTOR, or ADMIN' })
+  type: UserRole;
 }

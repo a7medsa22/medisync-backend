@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../email/email.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class OtpProvider {
@@ -9,7 +10,7 @@ export class OtpProvider {
     private emailService: EmailService,
   ) {}
 
-    async generateAndSendOtp(userId: string, type: 'EMAIL_VERIFICATION' | 'LOGIN_VERIFICATION' | 'PASSWORD_RESET'): Promise<void> {
+    async generateAndSendOtp(userId: string, type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET'): Promise<void> {
     const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -25,9 +26,6 @@ export class OtpProvider {
     switch (type) {
       case 'EMAIL_VERIFICATION':
         await this.emailService.sendEmailVerificationOtp(user.email, user.firstName, otpCode);
-        break;
-      case 'LOGIN_VERIFICATION':
-        await this.emailService.sendLoginOtp(user.email, user.firstName, otpCode);
         break;
       case 'PASSWORD_RESET':
         await this.emailService.sendPasswordResetOtp(user.email, user.firstName, otpCode);
@@ -45,7 +43,7 @@ export class OtpProvider {
     return true;
   }
 
-  async resendOtp(userId: string, type: string): Promise<{ message: string }> {
+  async resendOtp(userId: string, type: UserRole): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new BadRequestException('User not found');
 

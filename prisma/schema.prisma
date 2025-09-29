@@ -14,10 +14,12 @@ enum UserRole {
 }
 
 enum UserStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  SUSPENDED
+  INIT                      // Just created with role
+  PENDING_EMAIL_VERIFICATION // Basic info added, waiting for email verification
+  EMAIL_VERIFIED            // Email verified, profile incomplete
+  ACTIVE                    // Profile completed, can login
+  INACTIVE                  // Admin deactivated
+  SUSPENDED                 // Admin suspended
 }
 
 enum AppointmentStatus {
@@ -31,6 +33,7 @@ enum TokenType {
   ACCESS
   REFRESH
 }
+
 
 enum NotificationType {
   SYSTEM
@@ -48,11 +51,13 @@ model User {
   role            UserRole   @default(PATIENT)
 
   // Status & Approval
-  status          UserStatus @default(PENDING)
+  status          UserStatus 
   isActive        Boolean    @default(false)
   approvedAt      DateTime?
   approvedBy      String?
   rejectionReason String?
+  isProfileComplete Boolean @default(false)
+  registrationStep Int      @default(0) // 0=init, 1=basic, 2=verified, 3=complete
 
   // Identity Docs (Doctors only)
   nationalId      String?    @unique

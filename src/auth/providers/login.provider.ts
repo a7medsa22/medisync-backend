@@ -2,7 +2,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { LoginDto } from "../dto/auth.dto";
 import * as bcrypt from 'bcryptjs';
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { UserRole, UserStatus } from "@prisma/client";
+import { User, UserRole, UserStatus } from "@prisma/client";
 import { JwtPayload } from "../interfaces/jwt-payload.interface";
 import { AuthResponse } from "../interfaces/auth-response.interface";
 import { ConfigService } from "@nestjs/config";
@@ -12,7 +12,7 @@ import { TokenProvider } from "./token.provider";
 export class LoginProvider {
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
+    private config: ConfigService,
     private token: TokenProvider
   ) {}
 
@@ -33,7 +33,7 @@ export class LoginProvider {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     // Verify password
@@ -41,15 +41,9 @@ export class LoginProvider {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
+      
     // Check account status
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}. Please complete your registration.`);
-    }
-
-    if (!user.isActive || !user.isProfileComplete) {
-      throw new UnauthorizedException('Account is deactivated. Please contact support.');
-    }
+      await this.checkAccountStatus(user);
 
     // Generate tokens
     const payload: JwtPayload = {
@@ -80,12 +74,45 @@ export class LoginProvider {
       },
       accessToken,  
       refreshToken,
-      expiresIn: Number(this.configService.get('JWT_EXPIRES_IN', '15m')),
+      expiresIn: Number(this.config.get('JWT_EXPIRES_IN')),
     };
   }
 
   async logout(userId: string): Promise<{ message: string }> {
     // هنا ممكن نضيف logic لمسح refresh token من DB لو بتخزنها
     return { message: 'Logged out successfully' };
+  }
+
+  private async checkAccountStatus(user:User): Promise<void> {
+  switch (user.status) {
+  case UserStatus.PENDING_EMAIL_VERIFICATION:
+    throw new UnauthorizedException('Please verify your email before logging in.');
+
+  case UserStatus.EMAIL_VERIFIED:
+    throw new UnauthorizedException('Please complete your profile before logging in.');
+
+  case UserStatus.PENDING_ADMIN_APPROVAL:
+    throw new UnauthorizedException('Your account is pending admin approval. Please wait.');
+
+  case UserStatus.INACTIVE:
+    throw new UnauthorizedException('Your account is inactive. Please contact support.');
+
+  case UserStatus.SUSPENDED:
+    throw new UnauthorizedException('Your account is suspended. Please contact support.');
+
+  case UserStatus.ACTIVE:
+    // continue
+    break;
+
+  default:
+    throw new UnauthorizedException('Invalid account status. Please contact support.');
+}
+if (!user.isActive) {
+  throw new UnauthorizedException('Account is not active. Please contact support.');
+}
+
+if (!user.isProfileComplete) {
+  throw new UnauthorizedException('Please complete your profile before logging in.');
+}
   }
 }

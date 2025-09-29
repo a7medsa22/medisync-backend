@@ -46,19 +46,16 @@ export class RegisterProvider {
       data: {
         tempUserId: tempUser.id,
         role: tempUser.role,
-        status: 'INIT',
+        status: tempUser.status,
       },
     };
   }
 
-   /**
-    * 
-    * @param dto RegisterBasicDto 
-    * @returns { success: boolean; message: string; data: { userId: string; status: string } }
-    */
+   /*Step 2: Register basic info (email, password, name) */
+  
   async registerBasic(dto: RegisterBasicDto): Promise<{
-    data: { userId: string; status: string ,message: string}
-  }> {
+  message: string; 
+  data: { userId: string; status: string }  }> {
     const { tempUserId, email, password, confirmPassword, firstName, lastName } = dto;
 
     // Validate password confirmation
@@ -77,15 +74,13 @@ export class RegisterProvider {
 
     // Check if email already exists
     const existingUser = await this.prisma.user.findFirst({
-      where: {
-        email,
-        id: { not: tempUserId }, // Exclude current temp user
-      },
+      where: { email },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Email already registered');
-    }
+     if (existingUser && existingUser.id !== tempUserId) {
+    throw new ConflictException('Email already registered');
+  }
+
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -108,11 +103,13 @@ export class RegisterProvider {
 
     return {
       
-     data:{ userId: updatedUser.id,
-      status: 'PENDING_EMAIL_VERIFICATION',
-      message: 'Basic info saved. Please verify your email.', }
-    };
+    message: 'Basic info saved. Please verify your email.', 
+     data: {
+      userId: updatedUser.id,
+      status: updatedUser.status,
+    },
   }
+}
 
    /**
     * 
@@ -186,8 +183,8 @@ export class RegisterProvider {
       data: {
         phone,
         nationalId,
-        status: UserStatus.ACTIVE,
-        isActive: true,
+        status: UserStatus.PENDING_ADMIN_APPROVAL,
+        isActive: false,
         isProfileComplete: true,
         registrationStep: 3,
       },

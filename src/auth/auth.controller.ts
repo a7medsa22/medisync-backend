@@ -39,8 +39,8 @@ export class AuthController {
     }
   })
   @ApiResponse({ status: 400, description: 'Invalid role selection' })
-  async registerInit(@Body() registerInitDto: RegisterInitDto) {
-    return this.authService.registerInit(registerInitDto);
+  async registerInit(@Body() body: RegisterInitDto) {
+    return this.authService.registerInit(body);
   }
 
 
@@ -71,8 +71,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Validation error or passwords do not match' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
-  async registerBasic(@Body() registerBasicDto: RegisterBasicDto) {
-    return this.authService.registerBasic(registerBasicDto);
+  async registerBasic(@Body() body: RegisterBasicDto) {
+    return this.authService.registerBasic(body);
   }
 
   @Post('register/verify-email')

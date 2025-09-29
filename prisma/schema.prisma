@@ -17,6 +17,7 @@ enum UserStatus {
   INIT                      // Just created with role
   PENDING_EMAIL_VERIFICATION // Basic info added, waiting for email verification
   EMAIL_VERIFIED            // Email verified, profile incomplete
+  PENDING_ADMIN_APPROVAL    // Admin approval pending
   ACTIVE                    // Profile completed, can login
   INACTIVE                  // Admin deactivated
   SUSPENDED                 // Admin suspended

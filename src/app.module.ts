@@ -6,6 +6,8 @@ import { EmailModule } from './email/email.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { SpecializationsModule } from './specializations/specializations.module';
+import { DoctorsModule } from './doctors/doctors.module';
 
 
 @Module({
@@ -43,7 +45,9 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
     ConfigModule,
     AuthModule,
     UsersModule,
-    EmailModule
+    EmailModule,
+    SpecializationsModule,
+    DoctorsModule
   ],
  providers: [
   {

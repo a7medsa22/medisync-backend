@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
 import { RequestsService } from './requests.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { CreateFollowUpRequestDto } from './dto/create-follow-up-request.dto';
+import { RequestQueryDto } from './dto/request.query.dto';
 
 @ApiTags('Requests & Connections')
 @Controller('requests')
@@ -26,5 +27,22 @@ export class RequestsController {
   ) {
     return this.requestsService.createFollowUpRequest(patientProfile.id, body);
   }
+
+  @Get('pending')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({ 
+    summary: 'Get Pending Requests (Doctor)',
+    description: 'Doctor gets list of pending follow-up requests'
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiResponse({ status: 200, description: 'Pending requests retrieved successfully' })
+  async getPendingRequests(
+    @CurrentUser('profile') doctorProfile: any,
+    @Query() query: RequestQueryDto,
+  ) {
+    return this.requestsService.getPendingRequests(doctorProfile.id, query);
+  }
+  
 
 }

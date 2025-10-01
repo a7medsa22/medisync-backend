@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { SpecializationsModule } from './specializations/specializations.module';
 import { DoctorsModule } from './doctors/doctors.module';
+import { RequestsModule } from './requests/requests.module';
 
 
 @Module({
@@ -47,7 +48,8 @@ import { DoctorsModule } from './doctors/doctors.module';
     UsersModule,
     EmailModule,
     SpecializationsModule,
-    DoctorsModule
+    DoctorsModule,
+    RequestsModule
   ],
  providers: [
   {

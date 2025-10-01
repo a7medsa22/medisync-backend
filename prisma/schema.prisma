@@ -223,6 +223,7 @@ model FollowUpRequest  {
   patientId String
   doctorId  String
   prescriptionImage   String        // صورة الروشتة (required)
+  notes               String?
   status              RequestStatus @default(PENDING)
   rejectionReason     String?
 

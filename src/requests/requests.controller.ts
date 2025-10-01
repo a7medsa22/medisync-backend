@@ -43,6 +43,24 @@ export class RequestsController {
   ) {
     return this.requestsService.getPendingRequests(doctorProfile.id, query);
   }
+
+  @Get('all')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({ 
+    summary: 'Get All Requests (Doctor)',
+    description: 'Doctor gets all requests with optional status filter'
+  })
+  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'ACCEPTED', 'REJECTED'] })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiResponse({ status: 200, description: 'Requests retrieved successfully' })
+  async getAllRequests(
+    @CurrentUser('profile') doctorProfile: any,
+    @Query() query: RequestQueryDto,
+  ) {
+    return this.requestsService.getAllRequests(doctorProfile.id, query);
+  }
   
+
 
 }

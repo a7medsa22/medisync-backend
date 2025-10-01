@@ -14,4 +14,8 @@ export class RequestQueryDto {
   @IsNumberString()
   @Transform(({ value }) => parseInt(value))
   limit?: number = 10;
+
+  @ApiProperty({ required: false, enum: ['PENDING', 'ACCEPTED', 'REJECTED'] })
+  @IsOptional()
+  status?: 'PENDING' | 'ACCEPTED' | 'REJECTED';
 }

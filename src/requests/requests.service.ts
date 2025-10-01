@@ -91,8 +91,8 @@ export class RequestsService {
     };
   }
     
-    async getAllRequests(doctorId:string,dto:RequestQueryDto,status?: 'PENDING' | 'ACCEPTED' | 'REJECTED'){
-      const {page=1,limit=10} = dto;
+    async getAllRequests(doctorId:string,dto:RequestQueryDto){
+      const {page=1,limit=10,status} = dto;
 
       const skip = (page - 1) * limit;
       const where: any = { doctorId, ...(status && { status }) };
@@ -309,7 +309,7 @@ export class RequestsService {
       },
     });
   }
-  
+
   private readonly patientInclude = {
     patient: {
       include: {

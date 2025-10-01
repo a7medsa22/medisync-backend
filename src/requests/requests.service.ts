@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateFollowUpRequestDto } from './dto/create-follow-up-request.dto';
+import { RequestQueryDto } from './dto/request.query.dto';
 
 @Injectable()
 export class RequestsService {
@@ -59,8 +60,61 @@ export class RequestsService {
             request,
           };
   }
+  async getPendingRequests(doctorId:string,dto:RequestQueryDto){
+    const {page=1,limit=10} = dto;
 
-  
+    const skip = (page - 1) * limit;
+
+    const [requests , total] = await Promise.all([
+      this.prisma.followUpRequest.findMany({
+        where: {
+          doctorId,
+          status: 'PENDING',
+        },
+        
+        include: {
+          ...this.patientInclude,
+        },
+        skip,
+        take: limit,
+        orderBy:{requestDate:'asc'}
+      }),
+      this.prisma.followUpRequest.count({where: {doctorId,status: 'PENDING'},
+      }),
+    ]);
+
+   return {
+      requests,
+      pagination: this.buildPagination(total, page, limit),
+    };
+  }
+    
+    async getAllRequests(doctorId:string,dto:RequestQueryDto,status?: 'PENDING' | 'ACCEPTED' | 'REJECTED'){
+      const {page=1,limit=10} = dto;
+
+      const skip = (page - 1) * limit;
+      const where: any = { doctorId, ...(status && { status }) };
+
+      const [requests , total] = await Promise.all([
+        this.prisma.followUpRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        include: this.patientInclude,
+        orderBy: { requestDate: 'desc' },
+
+        }),
+        this.prisma.followUpRequest.count({where}),
+      ]);
+    
+      return {
+        requests,
+        pagination: this.buildPagination(total, page, limit),
+      };
+    }
+
+
+
 
 
 

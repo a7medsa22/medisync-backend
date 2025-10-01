@@ -36,8 +36,6 @@ export class RequestsController {
     summary: 'Get Pending Requests (Doctor)',
     description: 'Doctor gets list of pending follow-up requests'
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiResponse({ status: 200, description: 'Pending requests retrieved successfully' })
   async getPendingRequests(
     @CurrentUser('profile') doctorProfile: any,
@@ -51,10 +49,7 @@ export class RequestsController {
   @ApiOperation({ 
     summary: 'Get All Requests (Doctor)',
     description: 'Doctor gets all requests with optional status filter'
-  })
-  @ApiQuery({ name: 'status', required: false, enum: ['PENDING', 'ACCEPTED', 'REJECTED'] })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  }) 
   @ApiResponse({ status: 200, description: 'Requests retrieved successfully' })
   async getAllRequests(
     @CurrentUser('profile') doctorProfile: any,
@@ -98,6 +93,44 @@ export class RequestsController {
   }
 
   
+  // ===============================================
+  // CONNECTIONS ENDPOINTS
+  // ===============================================
+
+  @Get('connections')
+  @ApiOperation({ 
+    summary: 'Get My Connections',
+    description: 'Get all active connections (Doctor: patients, Patient: doctors)'
+  })
+  @ApiResponse({ status: 200, description: 'Connections retrieved successfully' })
+  async getConnections(
+    @CurrentUser('role') role: UserRole,
+    @CurrentUser('profile') profile: any,
+    @Query() query:RequestQueryDto,
+  ) {
+    if (role === UserRole.DOCTOR) {
+      return this.requestsService.getConnectedPatients(profile.id, query);
+    } else {
+      return this.requestsService.getConnectedDoctors(profile.id);
+    }
+  }
+
+  @Get('connections/:id')
+  @ApiOperation({ 
+    summary: 'Get Connection Details',
+    description: 'Get detailed information about a specific connection'
+  })
+  @ApiResponse({ status: 200, description: 'Connection details retrieved' })
+  @ApiResponse({ status: 404, description: 'Connection not found' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async getConnection(
+    @Param('id', ParseUUIDPipe) connectionId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.requestsService.getConnection(connectionId, userId);
+  }
+
+
 
 
 

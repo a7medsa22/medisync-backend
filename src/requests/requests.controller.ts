@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -6,6 +6,8 @@ import { UserRole } from '@prisma/client';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { CreateFollowUpRequestDto } from './dto/create-follow-up-request.dto';
 import { RequestQueryDto } from './dto/request.query.dto';
+import { RespondToRequestDto } from './dto/respond-to-request.dto';
+import { RejectRequestDto } from './dto/reject-request.dto';
 
 @ApiTags('Requests & Connections')
 @Controller('requests')
@@ -60,7 +62,45 @@ export class RequestsController {
   ) {
     return this.requestsService.getAllRequests(doctorProfile.id, query);
   }
+
+  @Post(':id/accept')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({ 
+    summary: 'Accept Follow-up Request (Doctor)',
+    description: 'Doctor accepts a follow-up request and sets communication schedule'
+  })
+  @ApiResponse({ status: 200, description: 'Request accepted, connection created' })
+  @ApiResponse({ status: 404, description: 'Request not found' })
+  @ApiResponse({ status: 400, description: 'Request already responded' })
+  async acceptRequest(
+    @Param('id', ParseUUIDPipe) requestId: string,
+    @CurrentUser('profile') doctorProfile: any,
+    @Body() body: RespondToRequestDto,
+  ) {
+    return this.requestsService.acceptRequest(requestId, doctorProfile.id, body);
+  }
+
+  @Post(':id/reject')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({ 
+    summary: 'Reject Follow-up Request (Doctor)',
+    description: 'Doctor rejects a follow-up request with reason'
+  })
+  @ApiResponse({ status: 200, description: 'Request rejected' })
+  @ApiResponse({ status: 404, description: 'Request not found' })
+  @ApiResponse({ status: 400, description: 'Request already responded' })
+  async rejectRequest(
+    @Param('id', ParseUUIDPipe) requestId: string,
+    @CurrentUser('profile') doctorProfile: any,
+    @Body() body: RejectRequestDto,
+  ) {
+    return this.requestsService.rejectRequest(requestId, doctorProfile.id, body.reason);
+  }
+
   
+
+
+
 
 
 }

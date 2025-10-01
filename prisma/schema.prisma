@@ -23,13 +23,6 @@ enum UserStatus {
   SUSPENDED                 // Admin suspended
 }
 
-enum AppointmentStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-  NO_SHOW
-}
-
 enum TokenType {
   ACCESS
   REFRESH
@@ -40,6 +33,31 @@ enum NotificationType {
   SYSTEM
   APPROVAL
   REMINDER
+}
+
+enum ConnectionType {
+  SCANNED    // من العيادة (instant)
+  REQUESTED  // Patient request
+}
+
+enum ConnectionStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum DocumentType {
+  LAB_RESULT
+  XRAY
+  PRESCRIPTION
+  MEDICAL_REPORT
+  OTHER
 }
 
 model User {
@@ -74,7 +92,7 @@ model User {
   otps                Otp[]
   tokens              AuthToken[]
   notifications       Notification[]
-  createdAppointments Appointment[] @relation("CreatedByUser")
+
 
   @@map("users")
 }
@@ -135,8 +153,10 @@ model Patient {
 
   // Relations
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments   Appointment[]
   medicalRecords MedicalRecord[]
+
+  connections         DoctorPatientConnection[]
+  followUpRequests    FollowUpRequest[]
 
   @@map("patients")
 }
@@ -169,42 +189,61 @@ model Doctor {
   // Relations
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialization Specialization @relation(fields: [specializationId], references: [id])
-  appointments   Appointment[]
+
+  connections         DoctorPatientConnection[]
+  followUpRequests    FollowUpRequest[]
 
   @@map("doctors")
 }
 
-model Appointment {
+model DoctorPatientConnection {
+  id              String            @id @default(uuid())
+  doctorId        String
+  patientId       String
+  connectionType  ConnectionType
+  status          ConnectionStatus  @default(ACTIVE)
+  
+  // Communication schedule (set by doctor after accepting)
+  availableDays   Json?             // ["wednesday", "friday"]
+  availableHours  Json?             // {"start": "17:00", "end": "21:00"}
+  
+  connectedAt     DateTime          @default(now())
+  lastActivityAt  DateTime?
+  
+  // Relations
+  doctor          Doctor            @relation(fields: [doctorId], references: [id])
+  patient         Patient           @relation(fields: [patientId], references: [id])
+  
+  @@unique([doctorId, patientId])
+  @@map("doctor_patient_connections")
+}
+
+model FollowUpRequest  {
   id        String @id @default(uuid())
   patientId String
   doctorId  String
+  prescriptionImage   String        // صورة الروشتة (required)
+  status              RequestStatus @default(PENDING)
+  rejectionReason     String?
 
-  appointmentDate DateTime
-  appointmentTime String
-  duration        Int               @default(30)
-  status          AppointmentStatus @default(SCHEDULED)
 
-  notes              String?
-  symptoms           String?
-  cancellationReason String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String
+      // Timestamps
+  requestDate         DateTime      @default(now())
+  responseDate        DateTime?
+  respondedBy         String?       // Doctor ID
 
   // Relations
   patient Patient @relation(fields: [patientId], references: [id])
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
-  creator User    @relation("CreatedByUser", fields: [createdBy], references: [id])
 
-  @@unique([doctorId, appointmentDate, appointmentTime])
-  @@map("appointments")
+  @@map("follow_up_requests")
 }
 
 model MedicalRecord {
   id        String @id @default(uuid())
   patientId String
+  doctorId      String
+  
 
   recordType  String
   title       String
@@ -212,6 +251,7 @@ model MedicalRecord {
   diagnosis   String?
   treatment   String?
   medications String?
+  
 
   // File attachments
   attachments Json?
@@ -224,4 +264,26 @@ model MedicalRecord {
   patient Patient @relation(fields: [patientId], references: [id])
 
   @@map("medical_records")
+}
+model Prescription {
+  id            String  @id @default(uuid())
+  connectionId  String
+  doctorId      String
+  patientId     String
+  medications   Json // Array of medications
+  /*
+  [
+    {
+      name: "Panadol",
+      frequency: 3,
+      frequencyType: "daily", // daily, weekly
+      notes: "بعد الأكل",
+      duration: "7 days"
+    }
+  ]
+  */
+  prescribedAt  DateTime
+  isActive      Boolean @default(true)
+
+  @@map("prescriptions")
 }

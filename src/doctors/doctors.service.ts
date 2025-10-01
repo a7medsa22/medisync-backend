@@ -6,7 +6,7 @@ import { UpdateDoctorDto } from './dto/update-doctor.dto';
 export class DoctorsService {
   create(createDoctorDto: CreateDoctorDto) {
     return 'This action adds a new doctor';
-  }
+  } 
 
   findAll() {
     return `This action returns all doctors`;

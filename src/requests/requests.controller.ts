@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query,Put ,ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -8,6 +8,7 @@ import { CreateFollowUpRequestDto } from './dto/create-follow-up-request.dto';
 import { RequestQueryDto } from './dto/request.query.dto';
 import { RespondToRequestDto } from './dto/respond-to-request.dto';
 import { RejectRequestDto } from './dto/reject-request.dto';
+import { SetAvailabilityDto } from './dto/set-availability.dto';
 
 @ApiTags('Requests & Connections')
 @Controller('requests')
@@ -130,10 +131,38 @@ export class RequestsController {
     return this.requestsService.getConnection(connectionId, userId);
   }
 
+  @Put('connections/:id/availability')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({ 
+    summary: 'Update Connection Availability (Doctor)',
+    description: 'Doctor updates communication schedule for a specific connection'
+  })
+  @ApiResponse({ status: 200, description: 'Availability updated successfully' })
+  @ApiResponse({ status: 404, description: 'Connection not found' })
+  @ApiResponse({ status: 403, description: 'Only doctor can update availability' })
+  async updateAvailability(
+    @Param('id', ParseUUIDPipe) connectionId: string,
+    @CurrentUser('profile') doctorProfile: any,
+    @Body() body: SetAvailabilityDto,
+  ) {
+    return this.requestsService.updateAvailability(connectionId, doctorProfile.id, body);
+  }
 
-
-
-
-
+  @Put('connections/:id/deactivate')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({ 
+    summary: 'Deactivate Connection (Doctor)',
+    description: 'Doctor deactivates a connection with a patient'
+  })
+  @ApiResponse({ status: 200, description: 'Connection deactivated' })
+  @ApiResponse({ status: 404, description: 'Connection not found' })
+  @ApiResponse({ status: 403, description: 'Only doctor can deactivate connection' })
+  async deactivateConnection(
+    @Param('id', ParseUUIDPipe) connectionId: string,
+    @CurrentUser('profile') doctorProfile: any,
+  ) {
+    return this.requestsService.deactivateConnection(connectionId, doctorProfile.id);
+  }
 
 }
+

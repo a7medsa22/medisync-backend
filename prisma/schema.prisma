@@ -176,7 +176,7 @@ model Specialization {
 model Doctor {
   id               String   @id @default(uuid())
   userId           String   @unique
-  specializationId String
+  specializationId String?
   licenseNumber    String?  @unique
   experience       Int?
   bio              String?
@@ -188,7 +188,7 @@ model Doctor {
 
   // Relations
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  specialization Specialization @relation(fields: [specializationId], references: [id])
+  specialization Specialization? @relation(fields: [specializationId], references: [id])
 
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]

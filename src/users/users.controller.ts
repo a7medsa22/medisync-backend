@@ -159,11 +159,7 @@ export class UsersController {
   @ApiOperation({ 
     summary: 'Get All Users (Admin only)',
     description: 'Retrieve all users with filtering and pagination options'
-  })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'role', required: false, enum: UserRole })
-  @ApiQuery({ name: 'status', required: false, enum: UserStatus })
+  }) 
   @ApiResponse({
     status: 200,
     description: 'Users retrieved successfully',

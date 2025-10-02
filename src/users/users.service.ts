@@ -145,9 +145,18 @@ export class UsersService {
  // ---------- Admin Management
     
     async getAllUsers(query:UserQueryDto) {
-    const { page = 1, limit = 10, role, status } = query;
+    const { page = 1, limit = 10, role, status,search } = query;
     const skip = (page - 1) * limit;
-    const where: any = { ...(role && { role }), ...(status && { status }) };
+    const where: any = { ...(role && { role }), ...(status && { status }), ...(search && {
+      OR: [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+        { nationalId: { contains: search, mode: 'insensitive' } },
+      ],
+    }),
+   };
 
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({

@@ -204,7 +204,7 @@ export class RegisterProvider {
       await this.prisma.doctor.create({
         data: {
           userId: user.id,
-          specializationId: 'temp-specialization-id', // Will be updated later
+          specializationId: null, // Will be updated later
           licenseNumber: medicalCardNumber,
         },
       });

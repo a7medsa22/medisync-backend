@@ -1,17 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsNumberString, IsOptional } from "class-validator";
+import { IsNumber, IsNumberString, IsOptional } from "class-validator";
 
 export class RequestQueryDto {
  @ApiProperty({ description: 'Page number', type: Number, example: 1, required: false, default: 1 })
   @IsOptional()
-  @IsNumberString()
+  @IsNumber()
   @Transform(({ value }) => parseInt(value))
   page?: number = 1;
 
   @ApiProperty({ description: 'Number of items per page', type: Number, example: 10, required: false, default: 10 })
   @IsOptional()
-  @IsNumberString()
+  @IsNumber()
   @Transform(({ value }) => parseInt(value))
   limit?: number = 10;
 

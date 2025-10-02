@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query,Put ,ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
 import { RequestsService } from './requests.service';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
@@ -70,6 +70,7 @@ export class RequestsController {
   @ApiResponse({ status: 200, description: 'Request accepted, connection created' })
   @ApiResponse({ status: 404, description: 'Request not found' })
   @ApiResponse({ status: 400, description: 'Request already responded' })
+  @ApiParam({ name: 'id', description: 'Follow-up request ID', type: String })
   async acceptRequest(
     @Param('id', ParseUUIDPipe) requestId: string,
     @CurrentUser('profile') doctorProfile: any,

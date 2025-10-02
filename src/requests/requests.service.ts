@@ -9,18 +9,18 @@ import { SetAvailabilityDto } from './dto/set-availability.dto';
 export class RequestsService {
   constructor(private readonly prisma:PrismaService){}
 
-  async createFollowUpRequest(patientId:string,dto: CreateFollowUpRequestDto) {
+  async createFollowUpRequest(userId:string,dto: CreateFollowUpRequestDto) {
      const {doctorId,prescriptionImage,notes} = dto
 
-   const patient = await this.prisma.patient.findUnique({
-    where:{id:doctorId},
-    include:{user:true}
-   });
-    
-   if(!patient){
-          throw new NotFoundException('Patient not found');
-   }
+    const patient = await this.prisma.patient.findUnique({
+  where: { userId },
+  include:{user:true}
+});
 
+if (!patient) {
+  throw new NotFoundException('Patient profile not found');
+}
+  
    const doctor = await this.prisma.doctor.findUnique({
     where:{id:doctorId},
     include:{user:true}
@@ -32,11 +32,12 @@ export class RequestsService {
 
       const pendingRequest = await this.prisma.followUpRequest.findFirst({
       where: {
-        patientId,
+        patientId: patient.id,
         doctorId,
         status: 'PENDING',
       },
     });
+
 
 
     if (pendingRequest) {
@@ -45,8 +46,8 @@ export class RequestsService {
 
     const request = await this.prisma.followUpRequest.create({
       data:{
-        patientId,
-        doctorId,
+        patient: { connect: { id: patient.id } },
+        doctor: { connect: { id: doctor.id } },
         prescriptionImage,
         notes,
       },

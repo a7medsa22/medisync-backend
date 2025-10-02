@@ -9,8 +9,10 @@ import { RequestQueryDto } from './dto/request.query.dto';
 import { RespondToRequestDto } from './dto/respond-to-request.dto';
 import { RejectRequestDto } from './dto/reject-request.dto';
 import { SetAvailabilityDto } from './dto/set-availability.dto';
+import { ApiAuth } from 'src/common/decorators/api-auth.decorator';
 
 @ApiTags('Requests & Connections')
+@ApiAuth()
 @Controller('requests')
 export class RequestsController {
   constructor(private readonly requestsService: RequestsService) {}
@@ -25,10 +27,10 @@ export class RequestsController {
   @ApiResponse({ status: 409, description: 'Already connected or pending request exists' })
   @ApiResponse({ status: 404, description: 'Doctor not found' })
   async createFollowUpRequest(
-    @CurrentUser('profile') patientProfile: any,
+    @CurrentUser() user: any,
     @Body() body: CreateFollowUpRequestDto,
   ) {
-    return this.requestsService.createFollowUpRequest(patientProfile.id, body);
+    return this.requestsService.createFollowUpRequest(user.id, body);
   }
 
   @Get('pending')

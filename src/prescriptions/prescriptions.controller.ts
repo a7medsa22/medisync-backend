@@ -132,7 +132,7 @@ export class PrescriptionsController {
     return this.prescriptionsService.getMyPrescriptions(patientProfile.id, isActive);
   }
 
-   @Get('patients/:patientId')
+  @Get('patients/:patientId')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({
     summary: 'Get Patient Prescriptions (Doctor)',
@@ -148,6 +148,22 @@ export class PrescriptionsController {
       doctorProfile.id,
       patientId,
     );
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get Prescription by ID',
+    description: 'Get detailed information about a specific prescription',
+  })
+  @ApiResponse({ status: 200, description: 'Prescription retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Prescription not found' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async getPrescription(
+    @Param('id', ParseUUIDPipe) prescriptionId: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') userRole: 'DOCTOR' | 'PATIENT',
+  ) {
+    return this.prescriptionsService.getPrescription(prescriptionId, userId, userRole);
   }
 
 

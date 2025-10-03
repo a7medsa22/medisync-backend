@@ -132,6 +132,26 @@ export class PrescriptionsController {
     return this.prescriptionsService.getMyPrescriptions(patientProfile.id, isActive);
   }
 
+   @Get('patients/:patientId')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({
+    summary: 'Get Patient Prescriptions (Doctor)',
+    description: 'Doctor gets all prescriptions for a specific patient',
+  })
+  @ApiResponse({ status: 200, description: 'Prescriptions retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'No connection with this patient' })
+  async getPatientPrescriptions(
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @CurrentUser('profile') doctorProfile: any,
+  ) {
+    return this.prescriptionsService.getPatientPrescriptions(
+      doctorProfile.id,
+      patientId,
+    );
+  }
+
+
+
 
 
 

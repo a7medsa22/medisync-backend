@@ -211,7 +211,17 @@ export class PrescriptionsService {
     });
   }
 
-
+   // ===============================================
+  // GET ACTIVE PRESCRIPTIONS COUNT
+  // ===============================================
+  async getActivePrescriptionsCount(patientId: string): Promise<number> {
+    return this.prisma.prescription.count({
+      where: {
+        patientId,
+        isActive: true,
+      },
+    });
+  }
 
 
    private readonly patientInclude = {

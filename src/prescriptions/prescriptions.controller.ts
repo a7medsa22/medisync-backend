@@ -14,6 +14,10 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 export class PrescriptionsController {
  constructor(private readonly prescriptionsService: PrescriptionsService){}
 
+  // ===============================================
+  // CREATE PRESCRIPTION (Doctor only)
+  // ===============================================
+
   @Post('connections/:connectionId')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({
@@ -35,5 +39,31 @@ export class PrescriptionsController {
       body,
     );
   }
+
+  // ===============================================
+  // GET PRESCRIPTIONS
+  // ===============================================
+
+  @Get('connections/:connectionId')
+  @ApiOperation({
+    summary: 'Get Connection Prescriptions',
+    description: 'Get all prescriptions for a specific doctor-patient connection',
+  })
+  @ApiResponse({ status: 200, description: 'Prescriptions retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Connection not found' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  async getConnectionPrescriptions(
+    @Param('connectionId', ParseUUIDPipe) connectionId: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') userRole: 'DOCTOR' | 'PATIENT',
+  ) {
+    return this.prescriptionsService.getConnectionPrescriptions(
+      connectionId,
+      userId,
+      userRole,
+    );
+  }
+  
+
 
 }

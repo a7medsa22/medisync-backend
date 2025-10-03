@@ -56,7 +56,7 @@ export class PrescriptionsService {
   }
   
     // Get all prescriptions for a connection
-    async getPrescriptionsForConnection(connectionId: string,userId:string,userRole:'DOCTOR'|'PATIENT') {
+    async getConnectionPrescriptions(connectionId: string,userId:string,userRole:'DOCTOR'|'PATIENT') {
 
     const connection = await this.prisma.doctorPatientConnection.findUniqueOrThrow({
       where:{id:connectionId},

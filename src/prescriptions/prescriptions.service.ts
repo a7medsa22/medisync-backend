@@ -1,11 +1,58 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
 import { UpdatePrescriptionDto } from './dto/update-prescription.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PrescriptionsService {
-  create(createPrescriptionDto: CreatePrescriptionDto) {
-    return 'This action adds a new prescription';
+  constructor(private prisma:PrismaService){}
+
+  async createPrescription(doctorId:string,connectionId:string,dto: CreatePrescriptionDto) {
+  
+    const connection = await this.prisma.doctorPatientConnection.findUnique({
+      where:{id:connectionId},
+      include:{
+        ...this.patientInclude,
+      }
+    });
+
+    if(!connection){
+      throw new NotFoundException('Connection not found');
+    }
+
+    if(connection.doctorId !== doctorId){
+      throw new ForbiddenException('You can only prescribe for your own patients');
+    }
+
+    if(connection.status !== 'ACTIVE'){
+      throw new ForbiddenException('You can only prescribe for active connections');
+    }
+
+    const prescription = await this.prisma.prescription.create({
+      data:{
+       doctorId,
+       connectionId,
+       patientId:connection.patientId,
+       medications:JSON.stringify(dto.medications),
+       notes:dto.notes,
+       prescribedAt:new Date(),
+       updateAt:new Date(),
+      },
+      include:{
+        ...this.doctorInclude,
+        ...this.patientInclude,
+      }
+    });
+
+    
+    // TODO: Send notification to patient
+    // await this.notificationsService.sendNewPrescriptionNotification(connection.patient.userId, prescription);
+   
+    return {
+      message: 'Prescription created successfully',
+      prescription,
+    }
+
   }
 
   findAll() {
@@ -23,4 +70,35 @@ export class PrescriptionsService {
   remove(id: number) {
     return `This action removes a #${id} prescription`;
   }
+
+   private readonly patientInclude = {
+    patient: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+
+                    },
+        },
+      },
+    },
+  };
+
+  private readonly doctorInclude = {
+    doctor: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        specialization: true,
+      },
+    },
+  };
+
 }

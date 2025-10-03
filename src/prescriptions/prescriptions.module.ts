@@ -5,5 +5,6 @@ import { PrescriptionsController } from './prescriptions.controller';
 @Module({
   controllers: [PrescriptionsController],
   providers: [PrescriptionsService],
+  exports:[PrescriptionsService]
 })
 export class PrescriptionsModule {}

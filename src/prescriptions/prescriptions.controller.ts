@@ -191,9 +191,29 @@ export class PrescriptionsController {
     );
   }
 
-
-
-
-
-
+  @Put(':id/deactivate')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({
+    summary: 'Deactivate Prescription (Doctor)',
+    description: 'Doctor marks a prescription as inactive (stopped)',
+  })
+  @ApiResponse({ status: 200, description: 'Prescription deactivated' })
+  @ApiResponse({ status: 404, description: 'Prescription not found' })
+  @ApiResponse({ status: 403, description: 'Not your prescription' })
+  async deactivatePrescription(
+    @Param('id', ParseUUIDPipe) prescriptionId: string,
+    @CurrentUser('profile') doctorProfile: any,
+  ) {
+    return this.prescriptionsService.deactivatePrescription(
+      prescriptionId,
+      doctorProfile.id,
+    );
+  }
+  
 }
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, ParseBoolPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, ParseBoolPipe, Put } from '@nestjs/common';
 import { PrescriptionsService } from './prescriptions.service';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
 import { UpdatePrescriptionDto } from './dto/update-prescription.dto';
@@ -164,6 +164,31 @@ export class PrescriptionsController {
     @CurrentUser('role') userRole: 'DOCTOR' | 'PATIENT',
   ) {
     return this.prescriptionsService.getPrescription(prescriptionId, userId, userRole);
+  }
+
+  // ===============================================
+  // UPDATE PRESCRIPTION (Doctor only)
+  // ===============================================
+
+  @Put(':id')
+  @Roles(UserRole.DOCTOR)
+  @ApiOperation({
+    summary: 'Update Prescription (Doctor)',
+    description: 'Doctor updates an existing prescription',
+  })
+  @ApiResponse({ status: 200, description: 'Prescription updated successfully' })
+  @ApiResponse({ status: 404, description: 'Prescription not found' })
+  @ApiResponse({ status: 403, description: 'Not your prescription' })
+  async updatePrescription(
+    @Param('id', ParseUUIDPipe) prescriptionId: string,
+    @CurrentUser('profile') doctorProfile: any,
+    @Body() body: UpdatePrescriptionDto,
+  ) {
+    return this.prescriptionsService.updatePrescription(
+      prescriptionId,
+      doctorProfile.id,
+      body,
+    );
   }
 
 

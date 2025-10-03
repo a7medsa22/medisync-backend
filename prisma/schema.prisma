@@ -157,6 +157,7 @@ model Patient {
 
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]
+  prescriptions       Prescription[]
 
   @@map("patients")
 }
@@ -192,6 +193,7 @@ model Doctor {
 
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]
+  prescriptions       Prescription[]
 
   @@map("doctors")
 }
@@ -211,6 +213,7 @@ model DoctorPatientConnection {
   lastActivityAt  DateTime?
   
   // Relations
+  prescriptions   Prescription[]
   doctor          Doctor            @relation(fields: [doctorId], references: [id])
   patient         Patient           @relation(fields: [patientId], references: [id])
   
@@ -283,8 +286,17 @@ model Prescription {
     }
   ]
   */
-  prescribedAt  DateTime
+  notes         String?
   isActive      Boolean @default(true)
+
+  prescribedAt  DateTime
+  updateAt      DateTime
+
+  //relation
+
+  connection    DoctorPatientConnection @relation(fields: [connectionId], references: [id])
+  doctor        Doctor  @relation(fields: [doctorId], references: [id])
+  patient       Patient @relation(fields: [patientId], references: [id])
 
   @@map("prescriptions")
 }

@@ -155,10 +155,64 @@ export class PrescriptionsService {
     return prescription;
 
   }
+  
+  // ===============================================
+  // UPDATE PRESCRIPTION (Doctor only)
+  // ===============================================
+  async updatePrescription(
+    prescriptionId: string,
+    doctorId: string,
+    dto: UpdatePrescriptionDto,
+  ) {
+    const prescription = await this.prisma.prescription.findUnique({
+      where: { id: prescriptionId },
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} prescription`;
+    if (!prescription) {
+      throw new NotFoundException('Prescription not found');
+    }
+
+    if (prescription.doctorId !== doctorId) {
+      throw new ForbiddenException('You can only update your own prescriptions');
+    }
+
+    return this.prisma.prescription.update({
+      where: { id: prescriptionId },
+      data: {
+        medications: dto.medications ? JSON.stringify(dto.medications) : undefined,
+        notes: dto.notes,
+        isActive: dto.isActive,
+      },
+      include: {
+        ...this.patientInclude,
+      },
+    });
   }
+
+ // ===============================================
+  // DEACTIVATE PRESCRIPTION (Doctor only)
+  // ===============================================
+  async deactivatePrescription(prescriptionId: string, doctorId: string) {
+    const prescription = await this.prisma.prescription.findUnique({
+      where: { id: prescriptionId },
+    });
+
+    if (!prescription) {
+      throw new NotFoundException('Prescription not found');
+    }
+
+    if (prescription.doctorId !== doctorId) {
+      throw new ForbiddenException('You can only deactivate your own prescriptions');
+    }
+
+    return this.prisma.prescription.update({
+      where: { id: prescriptionId },
+      data: { isActive: false },
+    });
+  }
+
+
+
 
    private readonly patientInclude = {
     patient: {
@@ -167,9 +221,8 @@ export class PrescriptionsService {
           select: {
             id: true,
             firstName: true,
-            lastName: true,
-
-                    },
+            lastName: true
+        },
         },
       },
     },

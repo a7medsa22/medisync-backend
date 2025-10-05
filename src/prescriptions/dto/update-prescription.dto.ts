@@ -1,5 +1,4 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreatePrescriptionDto } from './create-prescription.dto';
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { ArrayMinSize, IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from "class-validator";

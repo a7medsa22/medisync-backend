@@ -3,7 +3,7 @@ import { Type } from "class-transformer";
 import { ArrayMinSize, IsArray, IsOptional, IsString, ValidateNested } from "class-validator";
 import { MedicationDto } from "./medication.dto";
 
-export class CreatePrescriptionDto {
+export class CreatePrescriptionDto  {
     @ApiProperty({
     type: [MedicationDto],
     description: 'Array of medications in the prescription',

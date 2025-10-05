@@ -147,8 +147,8 @@ export class PrescriptionsService {
    if(!prescription){
       throw new NotFoundException('Prescription not found');
    }
-    const hasAccess = (userRole === 'DOCTOR' && prescription.doctorId === userId) ||
-                      (userRole === 'PATIENT' && prescription.patientId === userId);
+    const hasAccess = (userRole === 'DOCTOR' && prescription.doctor.userId === userId) ||
+                      (userRole === 'PATIENT' && prescription.patient.userId === userId);
     if(!hasAccess){
       throw new ForbiddenException('You do not have access to this prescription');
     }

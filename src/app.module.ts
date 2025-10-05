@@ -10,6 +10,7 @@ import { SpecializationsModule } from './specializations/specializations.module'
 import { DoctorsModule } from './doctors/doctors.module';
 import { RequestsModule } from './requests/requests.module';
 import { PrescriptionsModule } from './prescriptions/prescriptions.module';
+import { QrModule } from './qr/qr.module';
 
 
 @Module({
@@ -51,7 +52,8 @@ import { PrescriptionsModule } from './prescriptions/prescriptions.module';
     SpecializationsModule,
     DoctorsModule,
     RequestsModule,
-    PrescriptionsModule
+    PrescriptionsModule,
+    QrModule
   ],
  providers: [
   {

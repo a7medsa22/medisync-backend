@@ -35,10 +35,6 @@ enum NotificationType {
   REMINDER
 }
 
-enum ConnectionType {
-  SCANNED    // من العيادة (instant)
-  REQUESTED  // Patient request
-}
 
 enum ConnectionStatus {
   ACTIVE
@@ -58,6 +54,13 @@ enum DocumentType {
   PRESCRIPTION
   MEDICAL_REPORT
   OTHER
+}
+
+enum ConnectionType {
+  SCANNED      // من العيادة (instant) - EXISTING
+  REQUESTED    // Patient request - EXISTING
+  QR_CODE      // via QR scan - NEW ✅
+  ADMIN_ADDED  // Added by admin - EXISTING (if exists)
 }
 
 model User {
@@ -158,6 +161,8 @@ model Patient {
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]
   prescriptions       Prescription[]
+    qrTokens                QrToken[]  // ✅ NEW - QR codes used by patient
+
 
   @@map("patients")
 }
@@ -190,6 +195,8 @@ model Doctor {
   // Relations
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialization Specialization? @relation(fields: [specializationId], references: [id])
+    qrTokens                QrToken[]  // ✅ NEW
+
 
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]
@@ -202,7 +209,7 @@ model DoctorPatientConnection {
   id              String            @id @default(uuid())
   doctorId        String
   patientId       String
-  connectionType  ConnectionType
+  connectionType  ConnectionType?
   status          ConnectionStatus  @default(ACTIVE)
   
   // Communication schedule (set by doctor after accepting)
@@ -218,6 +225,9 @@ model DoctorPatientConnection {
   patient         Patient           @relation(fields: [patientId], references: [id])
   
   @@unique([doctorId, patientId])
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([status])
   @@map("doctor_patient_connections")
 }
 
@@ -299,4 +309,27 @@ model Prescription {
   patient       Patient @relation(fields: [patientId], references: [id])
 
   @@map("prescriptions")
+}
+
+model QrToken {
+  id           String    @id @default(uuid())
+  doctorId     String
+  token        String    @unique
+  type         String    @default("CONNECTION") // CONNECTION, PRESCRIPTION_VIEW, EMERGENCY_ACCESS
+  expiresAt    DateTime
+  isUsed       Boolean   @default(false)
+  usedBy       String?   // Patient ID who used it
+  usedAt       DateTime?
+  metadata     Json?     // Extra data: {clinicRoom, notes, etc}
+  createdAt    DateTime  @default(now())
+  
+  // Relations
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient Patient? @relation(fields: [usedBy], references: [id], onDelete: SetNull)
+  
+  @@index([token])
+  @@index([doctorId])
+  @@index([expiresAt])
+  @@index([isUsed])
+  @@map("qr_tokens")
 }

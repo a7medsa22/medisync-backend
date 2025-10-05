@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateQrDto } from './dto/create-qr.dto';
+import { CreateQrDto } from './dto/generate-qr.dto';
 import { UpdateQrDto } from './dto/update-qr.dto';
 
 @Injectable()

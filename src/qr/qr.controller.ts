@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { QrService } from './qr.service';
-import { CreateQrDto } from './dto/create-qr.dto';
+import { CreateQrDto } from './dto/generate-qr.dto';
 import { UpdateQrDto } from './dto/update-qr.dto';
 
 @Controller('qr')

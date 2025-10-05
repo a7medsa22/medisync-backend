@@ -15,9 +15,9 @@ export class SpecializationsController {
 
   @Post()
   @ApiAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.DOCTOR,UserRole.ADMIN)
   @ApiOperation({ 
-    summary: 'Create new specialization (Admin only)',
+    summary: 'Create new specialization (Doctor and Admin only)',
     description: 'Add a new medical specialization to the system'
   })
   @ApiResponse({ status: 201, description: 'Specialization created successfully' })

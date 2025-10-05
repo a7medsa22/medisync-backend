@@ -67,8 +67,8 @@ export class PrescriptionsService {
     });
 
         // Check access permission
-    const hasAccess = (userRole === 'DOCTOR' && connection.doctorId === userId) ||
-                      (userRole === 'PATIENT' && connection.patientId === userId);
+    const hasAccess = (userRole === 'DOCTOR' && connection.doctor.userId === userId) ||
+                      (userRole === 'PATIENT' && connection.patient.userId === userId);
     if(!hasAccess){
       throw new ForbiddenException('You do not have access to this connection');
     }

@@ -45,6 +45,7 @@ export class PrescriptionsController {
   // ===============================================
 
   @Get('connections/:connectionId')
+  @Roles(UserRole.DOCTOR,UserRole.PATIENT)
   @ApiOperation({
     summary: 'Get Connection Prescriptions',
     description: 'Get all prescriptions for a specific doctor-patient connection',

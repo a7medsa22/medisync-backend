@@ -6,7 +6,7 @@ export enum QrTokenType {
   PRESCRIPTION_VIEW = 'PRESCRIPTION_VIEW',
   EMERGENCY_ACCESS = 'EMERGENCY_ACCESS'
 }
-export class CreateQrDto {
+export class GenerateQrDto  {
     
     @ApiPropertyOptional({
     enum: QrTokenType,

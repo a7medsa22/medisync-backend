@@ -1,26 +1,68 @@
-import { Injectable } from '@nestjs/common';
-import { CreateQrDto } from './dto/generate-qr.dto';
-import { UpdateQrDto } from './dto/active-qr-list.dto';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { GenerateQrDto } from './dto/generate-qr.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { QrTokenResponseDto } from './dto/qr-response.dto';
 
 @Injectable()
 export class QrService {
-  create(createQrDto: CreateQrDto) {
-    return 'This action adds a new qr';
+
+    constructor(private readonly prisma: PrismaService) {}
+
+ async generateConnectionQr(doctorId:string,dto: GenerateQrDto): Promise<QrTokenResponseDto> {
+   const doctor = await this.prisma.doctor.findUnique({
+    where:{id:doctorId},
+    include:{
+        ...this.userInclude,
+    }
+   });
+    if(!doctor){
+      throw new NotFoundException('Doctor not found');
+    }
+   if(doctor.user.status !== 'ACTIVE'){
+      throw new BadRequestException('Doctor is not active');
+    }
+    
+    return {}
+
+
   }
 
-  findAll() {
-    return `This action returns all qr`;
-  }
+   private readonly patientInclude = {
+    patient: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+        },
+        },
+      },
+    },
+  };
 
-  findOne(id: number) {
-    return `This action returns a #${id} qr`;
-  }
-
-  update(id: number, updateQrDto: UpdateQrDto) {
-    return `This action updates a #${id} qr`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} qr`;
-  }
+  private readonly doctorInclude = {
+    doctor: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        specialization: true,
+      },
+    },
+  };
+  const userInclude = {
+    user: {
+      select: {
+        id:true,
+        firstName: true,
+        lastName: true,
+        status: true,
+      },
+    },
+  };
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateQrDto } from './dto/generate-qr.dto';
-import { UpdateQrDto } from './dto/update-qr.dto';
+import { UpdateQrDto } from './dto/active-qr-list.dto';
 
 @Injectable()
 export class QrService {

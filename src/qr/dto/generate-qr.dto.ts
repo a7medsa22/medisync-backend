@@ -62,5 +62,17 @@ export class ValidateQrDto {
   token: string;
 }
 
+export class InvalidateQrResponseDto {
+  @ApiProperty({
+    description: 'Success message'
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Token ID that was invalidated'
+  })
+  tokenId: string;
+}
+
 
 

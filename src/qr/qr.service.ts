@@ -158,9 +158,7 @@ return {
     };
   }
   
-  
-
- /**
+  /**
    * Validate QR token (check expiry, usage, etc)
    */
   async validateToken(token: string) {

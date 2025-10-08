@@ -16,7 +16,7 @@ export class QrProvider {
    * Generate unique token with signature
    * Format: MDS_doctorId_randomString
    */
-  private generateToken(doctorId: string): string {
+   generateToken(doctorId: string): string {
     const randomPart = nanoid(32); // Generate 32 char random string
     const baseToken = `${this.config.get('QR_TOKEN_PREFIX')}_${doctorId}_${randomPart}`;
     return baseToken;
@@ -25,7 +25,7 @@ export class QrProvider {
   /**
    * Verify token format
    */
-  private verifyTokenFormat(token: string): boolean {
+   verifyTokenFormat(token: string): boolean {
     const regex = new RegExp(`^${this.config.get('QR_TOKEN_PREFIX')}[a-f0-9-]{36}_[a-zA-Z0-9_-]{32}$`);
 
     return regex.test(token);
@@ -34,7 +34,7 @@ export class QrProvider {
   /**
    * Verify token signature (optional extra security)
    */
-  private verifyTokenSignature(token: string, doctorId: string): boolean {
+   verifyTokenSignature(token: string, doctorId: string): boolean {
     // Extract doctor ID from token
     const parts = token.split('_');
     if (parts.length !== 3) return false;
@@ -46,7 +46,7 @@ export class QrProvider {
   /**
    * Generate QR Code as Base64 image
    */
-  private async generateQrCodeImage(token: string): Promise<string> {
+   async generateQrCodeImage(token: string): Promise<string> {
      
     try {
       // Generate QR with high error correction
@@ -70,7 +70,7 @@ export class QrProvider {
   /**
    * Generate HMAC signature for extra security (optional)
    */
-  private generateSignature(data: string): string {
+   generateSignature(data: string): string {
     const TOKEN_SECRET = this.config.get('QR_TOKEN_PREFIX')
     return crypto
       .createHmac('sha256', TOKEN_SECRET)

@@ -35,7 +35,7 @@ export class QrService {
     }
 
     // 2. Generate unique token
-    const token = this.generateToken(doctorId);
+    const token = this.qrProvider.generateToken(doctorId);
 
      const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + (dto.expiryMinutes || 5));
@@ -51,7 +51,7 @@ export class QrService {
     });
 
         // . Generate QR Code image
-    const qrCodeImage  = await this.generateQrCodeImage(token);
+    const qrCodeImage  = await this.qrProvider.generateQrCodeImage(token);
       
     //Calculate remaining minutes
       const remainingMinutes = Math.floor(
@@ -89,7 +89,7 @@ export class QrService {
    */
   async validateToken(token: string) {
     // 1. Parse and verify token format
-    if (!this.verifyTokenFormat(token)) {
+    if (!this.qrProvider.verifyTokenFormat(token)) {
       throw new BadRequestException('Invalid QR token format');
     }
 
@@ -113,7 +113,7 @@ export class QrService {
     }
 
     // 5. Verify signature
-    if (!this.verifyTokenSignature(token, qrToken.doctorId)) {
+    if (!this.qrProvider.verifyTokenSignature(token, qrToken.doctorId)) {
       throw new UnauthorizedException();
     }
 

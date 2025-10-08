@@ -8,6 +8,7 @@ import * as QRCode from 'qrcode';
 import * as crypto from 'crypto'
 import { doctorInclude, patientInclude, userInclude } from '../common/utils/include.utils';
 import { QrProvider } from './qr.provider';
+import { ConnectionType } from '@prisma/client';
 
 
 @Injectable()
@@ -118,8 +119,46 @@ export class QrService {
     if(existingConnection && existingConnection.status === 'ACTIVE'){
       throw new BadRequestException('Connection already exists');
     }
-  
+
+    const connection = await this.prisma.doctorPatientConnection.create({
+      data:{
+        doctorId:doctor.id,
+        patientId:patient.id,
+        status:'ACTIVE',
+        connectionType: ConnectionType.QR_CODE,
+        connectedAt: new Date(),
+      }
+    });
+    
+    await this.prisma.qrToken.update({
+      where:{id:qrToken.id},
+      data:{
+        isUsed:true,
+        usedBy:patient.id,
+        usedAt: new Date(),
+      }
+    });
+
+return {
+      message: 'connection successful! the doctor can now access your patient file',
+      connectionId: connection.id,
+      doctor: {
+        id: doctor.id,
+        name: `${doctor.user.firstName} ${doctor.user.lastName}`,
+        specialty: doctor.specialization?.name || 'General',
+        licenseNumber: doctor.licenseNumber || '',
+      },
+      patient: {
+        id: patient.id,
+        name: `${patient.user.firstName} ${patient.user.lastName}`,
+      },
+      connectedAt: connection.connectedAt,
+      connectionMethod: connection.connectionType!,
+      status: connection.status,
+    };
   }
+  
+  
 
  /**
    * Validate QR token (check expiry, usage, etc)

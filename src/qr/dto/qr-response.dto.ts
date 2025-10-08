@@ -97,4 +97,10 @@ export class QrConnectionResponseDto {
     example: 'connection successful! the doctor can now access your patient file',
   })
   message: string;
+
+  @ApiProperty({
+    description: 'connection status',
+    example: 'ACTIVE'
+  })
+  status: string;
 }

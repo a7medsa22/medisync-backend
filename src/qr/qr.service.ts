@@ -1,7 +1,7 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { GenerateQrDto, QrTokenType } from './dto/generate-qr.dto';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { GenerateQrDto, QrTokenType, ScanQrAndValidateDto } from './dto/generate-qr.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { QrTokenResponseDto } from './dto/qr-response.dto';
+import { QrConnectionResponseDto, QrTokenResponseDto } from './dto/qr-response.dto';
 import { ConfigService } from '@nestjs/config';
 import { nanoid } from 'nanoid';
 import * as QRCode from 'qrcode';
@@ -70,6 +70,50 @@ export class QrService {
     };
   }
 
+  /**
+   * Patient scans QR and creates instant connection
+   */
+  async scanAndConnect(patientId: string,scanDto: ScanQrAndValidateDto): Promise<QrConnectionResponseDto> { 
+       const qrToken = await this.validateToken(scanDto.token);
+
+  
+  }
+
+ /**
+   * Validate QR token (check expiry, usage, etc)
+   */
+  async validateToken(token: string) {
+    // 1. Parse and verify token format
+    if (!this.verifyTokenFormat(token)) {
+      throw new BadRequestException('Invalid QR token format');
+    }
+
+    // 2. Find token in database
+    const qrToken = await this.prisma.qrToken.findUnique({
+      where: { token },
+    });
+
+    if (!qrToken) {
+      throw new NotFoundException();
+    }
+
+    // 3. Check if already used
+    if (qrToken.isUsed) {
+      throw new BadRequestException('QR Code has already been used');
+    }
+
+    // 4. Check if expired
+    if (new Date() > qrToken.expiresAt) {
+      throw new BadRequestException('QR Code has expired');
+    }
+
+    // 5. Verify signature
+    if (!this.verifyTokenSignature(token, qrToken.doctorId)) {
+      throw new UnauthorizedException();
+    }
+
+    return qrToken;
+  }
 
 
    private readonly patientInclude = {
@@ -100,7 +144,7 @@ export class QrService {
       },
     },
   };
-  const userInclude = {
+  private readonly userInclude = {
     user: {
       select: {
         id:true,
@@ -110,6 +154,7 @@ export class QrService {
       },
     },
   };
+   
 
     // ==================== PRIVATE HELPER METHODS ====================
 

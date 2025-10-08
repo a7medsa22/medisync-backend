@@ -195,7 +195,7 @@ model Doctor {
   // Relations
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialization Specialization? @relation(fields: [specializationId], references: [id])
-    qrTokens                QrToken[]  // ✅ NEW
+  qrTokens                QrToken[]  // ✅ NEW
 
 
   connections         DoctorPatientConnection[]

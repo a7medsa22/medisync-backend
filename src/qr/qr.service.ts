@@ -79,8 +79,45 @@ export class QrService {
    * Patient scans QR and creates instant connection
    */
   async scanAndConnect(patientId: string,scanDto: ScanQrAndValidateDto): Promise<QrConnectionResponseDto> { 
-       const qrToken = await this.validateToken(scanDto.token);
+    const qrToken = await this.validateToken(scanDto.token);
+      if (qrToken.type !== QrTokenType.CONNECTION) {
+      throw new BadRequestException('Invalid QR token type');
+    }   
 
+      const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId },
+      include: {
+        ...userInclude,
+      },
+    });
+    if(!patient){
+      throw new NotFoundException('Patient not found');
+    }
+    if(patient.user.status !== 'ACTIVE'){
+      throw new BadRequestException('Patient is not active');
+    }
+
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { id: qrToken.doctorId },
+      include: {
+        ...userInclude,
+        specialization: true,
+      }
+    });
+
+    if(!doctor){
+      throw new NotFoundException('Doctor not found');
+    }
+    if(doctor.user.status !== 'ACTIVE'){
+      throw new BadRequestException('Doctor is not active');
+    }
+
+    const existingConnection = await this.prisma.doctorPatientConnection.findUnique({
+      where:{doctorId_patientId:{doctorId:doctor.id,patientId:patient.id}}
+    });
+    if(existingConnection && existingConnection.status === 'ACTIVE'){
+      throw new BadRequestException('Connection already exists');
+    }
   
   }
 

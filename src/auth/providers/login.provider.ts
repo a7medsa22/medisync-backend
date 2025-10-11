@@ -99,7 +99,10 @@ export class LoginProvider {
   }
 
   async logout(userId: string): Promise<{ message: string }> {
-    // هنا ممكن نضيف logic لمسح refresh token من DB لو بتخزنها
+    // 1. حذف refresh token من DB
+    await this.prisma.user.deleteMany({
+      where: { id: userId },
+    });
     return { message: 'Logged out successfully' };
   }
 

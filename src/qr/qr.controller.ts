@@ -32,7 +32,7 @@ export class QrController {
   @ApiResponse({ status: 403, description: 'Only doctors can generate QR codes' })
   @ApiResponse({ status: 400, description: 'Doctor account is not active' })
  async generateQr(@CurrentUser() user: any, @Body() body: GenerateQrDto): Promise<QrTokenResponseDto> {
-    return this.qrService.generateConnectionQr (user,  body );
+    return this.qrService.generateConnectionQrForDoctor (user,  body );
   }
 
   @Post('scan')
@@ -51,7 +51,7 @@ export class QrController {
   @ApiResponse({ status: 403, description: 'Only patients can scan QR codes' })
   @ApiResponse({ status: 400, description: 'Patient account is not active' })
  async scanQr(@CurrentUser() user: any, @Body() body: ScanQrAndValidateDto) {
-    return this.qrService.scanAndConnect (user,  body );
+    return this.qrService.scanAndConnectForPatient (user,  body );
   }
 
    @Post('validate')

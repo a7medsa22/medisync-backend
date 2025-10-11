@@ -233,6 +233,46 @@ return {
       expiredCount,
     };
   }
-  
+  /**
+   * Invalidate/delete a QR token
+   */
+  async invalidateToken(doctorId: string, tokenId: string) {
+    const token = await this.prisma.qrToken.findUnique({
+      where: { id: tokenId },
+    });
+
+    if (!token) {
+      throw new NotFoundException('Token not found');
+    }
+
+    if (token.doctorId !== doctorId) {
+     throw new UnauthorizedException('ليس لديك صلاحية لحذف هذا الـ QR');
+
+    }
+
+    await this.prisma.qrToken.delete({
+      where: { id: tokenId },
+    });
+
+    return {
+      message: 'successfluy,Qr Is Invalid',
+      tokenId,
+    };
+  }
+  /**
+   * Cleanup expired tokens (runs daily)
+   
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async cleanupExpiredTokens() {
+    const deleted = await this.prisma.qrToken.deleteMany({
+      where: {
+        expiresAt: { lt: new Date() },
+      },
+    });
+
+    console.log(`🧹 Cleaned up ${deleted.count} expired QR tokens`);
+    return deleted.count;
+  }
+*/
 
 }

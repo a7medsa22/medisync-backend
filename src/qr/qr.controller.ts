@@ -54,5 +54,7 @@ export class QrController {
     return this.qrService.scanAndConnect (patientId,  body );
   }
 
+  
+
 
 }

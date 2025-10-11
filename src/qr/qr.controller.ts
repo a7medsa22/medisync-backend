@@ -8,6 +8,7 @@ import { UserRole } from '@prisma/client';
 import { QrTokenResponseDto } from './dto/qr-response.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { ActiveQrListResponseDto } from './dto/active-qr-list.dto';
+import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 
 @ApiTags('QR Code')
 @Controller('qr')
@@ -30,9 +31,8 @@ export class QrController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Only doctors can generate QR codes' })
   @ApiResponse({ status: 400, description: 'Doctor account is not active' })
- async generateQr(@CurrentUser('profile') doctorProfile: any, @Body() body: GenerateQrDto): Promise<QrTokenResponseDto> {
-    const doctorId = doctorProfile.id;
-    return this.qrService.generateConnectionQr (doctorId,  body );
+ async generateQr(@CurrentUser() user: any, @Body() body: GenerateQrDto): Promise<QrTokenResponseDto> {
+    return this.qrService.generateConnectionQr (user,  body );
   }
 
   @Post('scan')
@@ -50,9 +50,8 @@ export class QrController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Only patients can scan QR codes' })
   @ApiResponse({ status: 400, description: 'Patient account is not active' })
- async scanQr(@CurrentUser('profile') patientProfile: any, @Body() body: ScanQrAndValidateDto) {
-    const patientId = patientProfile.id;
-    return this.qrService.scanAndConnect (patientId,  body );
+ async scanQr(@CurrentUser() user: any, @Body() body: ScanQrAndValidateDto) {
+    return this.qrService.scanAndConnect (user,  body );
   }
 
    @Post('validate')

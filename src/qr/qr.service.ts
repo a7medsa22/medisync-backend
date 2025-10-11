@@ -11,6 +11,7 @@ import { QrProvider } from './qr.provider';
 import { ConnectionType } from '@prisma/client';
 import { ActiveQrItemDto } from './dto/active-qr-list.dto';
 import {Cron,CronExpression} from '@nestjs/schedule'
+import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 
 
 @Injectable()
@@ -22,9 +23,18 @@ export class QrService {
        
     ) {}
 
- async generateConnectionQr(doctorId:string,dto: GenerateQrDto): Promise<QrTokenResponseDto> {
+    async generateConnectionQrForDoctor(user: JwtPayload, dto: GenerateQrDto) {
+  if (!user.doctorId) {
+    throw new BadRequestException('Doctor profile not found');
+  }
+
+  // هنا تبعت doctorId فقط
+  return this.generateConnectionQr(user.doctorId, dto);
+}
+
+ async generateConnectionQr(doctorId: string,dto: GenerateQrDto): Promise<QrTokenResponseDto> {
    const doctor = await this.prisma.doctor.findUnique({
-    where:{id:doctorId},
+    where:{id:doctorId },
     include:{
         ...userInclude,
         specialization: true,
@@ -81,6 +91,13 @@ export class QrService {
   /**
    * Patient scans QR and creates instant connection
    */
+  async scanAndConnectForPatient(user: JwtPayload, dto: ScanQrAndValidateDto) {
+  if (!user.patientId) {
+    throw new BadRequestException('Patient profile not found');
+  }
+
+  return this.scanAndConnect(user.patientId, dto);
+}
   async scanAndConnect(patientId: string,scanDto: ScanQrAndValidateDto): Promise<QrConnectionResponseDto> { 
     const qrToken = await this.validateToken(scanDto.token);
       if (qrToken.type !== QrTokenType.CONNECTION) {

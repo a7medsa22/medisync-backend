@@ -8,7 +8,6 @@ import { UserRole } from '@prisma/client';
 import { QrTokenResponseDto } from './dto/qr-response.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { ActiveQrListResponseDto } from './dto/active-qr-list.dto';
-import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 
 @ApiTags('QR Code')
 @Controller('qr')

@@ -21,10 +21,13 @@ export class TokenProvider {
   }
 
   async generateRefreshToken(userId: string): Promise<string> {
-    return this.jwtService.signAsync({ sub: userId, type: 'refresh' }, {
+   return this.jwtService.signAsync(
+    { sub: userId, type: 'refresh' },
+    {
       secret: this.configService.get('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
-    });
+    },
+  );
   }
 
   

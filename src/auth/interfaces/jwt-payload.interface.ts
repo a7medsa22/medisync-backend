@@ -5,6 +5,8 @@ export interface JwtPayload {
   email: string;
   role: UserRole;
   status: UserStatus;
+  doctorId?: string | null; 
+  patientId?: string | null;
   iat?: number; // issued at
   exp?: number; // expires at
 }

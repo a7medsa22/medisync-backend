@@ -42,6 +42,24 @@ export class LoginProvider {
       throw new UnauthorizedException('Invalid credentials');
     }
       
+     // 2. جيب doctorId لو الـ user doctor
+  let doctorId: string | null = null;
+  let patientId: string | null = null;
+
+  if (user.role === UserRole.DOCTOR) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId: user.id }
+    });
+     doctorId = doctor?.id || null; 
+  }
+
+  if (user.role === UserRole.PATIENT) {
+    const patient = await this.prisma.patient.findUnique({
+      where: { userId: user.id }
+    });
+    patientId = patient?.id || null;
+  }
+
     // Check account status
       await this.checkAccountStatus(user);
 
@@ -51,6 +69,8 @@ export class LoginProvider {
       email: user.email,
       role: user.role,
       status: user.status,
+      doctorId,  // new add
+      patientId  // new add
     };
 
     const accessToken = await this.token.generateAccessToken(payload);
@@ -71,7 +91,7 @@ export class LoginProvider {
         role: user.role,
         status: user.status,
         profile: user.role === UserRole.PATIENT ? user.patient : user.doctor,
-      },
+        },
       accessToken,  
       refreshToken,
       expiresIn: Number(this.config.get('JWT_EXPIRES_IN')),

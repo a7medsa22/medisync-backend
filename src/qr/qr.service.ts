@@ -9,6 +9,7 @@ import * as crypto from 'crypto'
 import { doctorInclude, patientInclude, userInclude } from '../common/utils/include.utils';
 import { QrProvider } from './qr.provider';
 import { ConnectionType } from '@prisma/client';
+import { ActiveQrItemDto } from './dto/active-qr-list.dto';
 
 
 @Injectable()
@@ -193,5 +194,45 @@ return {
 
     return qrToken;
   }
+   /**
+   * Get all active QR tokens for a doctor
+   */
+   async getActiveTokens (doctorId:string){
+   
+   const tokens = await this.prisma.qrToken.findMany({
+      where: {
+        doctorId,
+        expiresAt: { gte: new Date() }, // Not expired
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const now = Date.now();
+    const activeCount = tokens.filter((t) => !t.isUsed).length;
+    const expiredCount = tokens.filter((t) => new Date(t.expiresAt) < new Date()).length;
+
+    const tokenItems: ActiveQrItemDto[] = tokens.map((token) => ({
+      id: token.id,
+      token: token.token,
+      type: token.type as QrTokenType,
+      createdAt: token.createdAt,
+      expiresAt: token.expiresAt,
+      isUsed: token.isUsed,
+      usedBy: token.usedBy || undefined,
+      usedAt: token.usedAt || undefined,
+      remainingMinutes: Math.max(
+        0,
+        Math.floor((token.expiresAt.getTime() - now) / 60000),
+      ),
+    }));
+
+    return {
+      tokens: tokenItems,
+      total: tokens.length,
+      activeCount,
+      expiredCount,
+    };
+  }
+  
 
 }

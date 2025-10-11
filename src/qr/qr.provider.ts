@@ -3,11 +3,11 @@ import { QrService } from "./qr.service";
 import { ConfigService } from "@nestjs/config";
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto'
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
+@Injectable()
 export class QrProvider {
   constructor(
-    private readonly qrService: QrService,
     private readonly config:ConfigService
   ) {}
     // ==================== PRIVATE HELPER METHODS ====================

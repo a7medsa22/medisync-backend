@@ -133,6 +133,32 @@ export class QrController {
     const doctorId = req.user.doctorId;
     return this.qrService.invalidateToken(doctorId, tokenId);
   }
- 
+  
+  @Post('cleanup')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Manually cleanup expired tokens',
+    description: 'Manually run the cleanup job to delete expired QR tokens',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Cleanup completed',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        deletedCount: { type: 'number' },
+      },
+    },
+  })
+  async manualCleanup() {
+    const count = await this.qrService.cleanupExpiredTokens();
+    return {
+      message: 'Cleanup completed successfully',
+      deletedCount: count,
+    };
+  }
+
 
 }

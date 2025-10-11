@@ -10,6 +10,7 @@ import { doctorInclude, patientInclude, userInclude } from '../common/utils/incl
 import { QrProvider } from './qr.provider';
 import { ConnectionType } from '@prisma/client';
 import { ActiveQrItemDto } from './dto/active-qr-list.dto';
+import {Cron,CronExpression} from '@nestjs/schedule'
 
 
 @Injectable()
@@ -259,9 +260,7 @@ return {
       tokenId,
     };
   }
-  /**
-   * Cleanup expired tokens (runs daily)
-   
+  
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async cleanupExpiredTokens() {
     const deleted = await this.prisma.qrToken.deleteMany({
@@ -273,6 +272,6 @@ return {
     console.log(`🧹 Cleaned up ${deleted.count} expired QR tokens`);
     return deleted.count;
   }
-*/
+
 
 }

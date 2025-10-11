@@ -246,7 +246,7 @@ return {
     }
 
     if (token.doctorId !== doctorId) {
-     throw new UnauthorizedException('ليس لديك صلاحية لحذف هذا الـ QR');
+     throw new UnauthorizedException('You can only invalidate your own tokens');
 
     }
 
@@ -255,7 +255,7 @@ return {
     });
 
     return {
-      message: 'successfluy,Qr Is Invalid',
+      message: 'Token invalidated successfully',
       tokenId,
     };
   }

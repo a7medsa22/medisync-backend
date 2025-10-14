@@ -1,6 +1,8 @@
-## 🏥 MediSync - Medical Appointment & Records Management System
+## 🏥 MediSync API
 
-A comprehensive healthcare management platform built with NestJS that streamlines medical appointments, patient records, and healthcare workflows.
+**MediSync** is a **Medical Medical follow-up & Records Management System** built with **NestJS**, designed to streamline healthcare processes between doctors and patients.  
+It provides secure authentication, appointment booking, prescription management, and communication modules — all under a modular, scalable backend architecture.
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
@@ -25,48 +27,66 @@ A comprehensive healthcare management platform built with NestJS that streamline
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 
-## 🚀 Overview
+## 🚀 Features
 
-MediSync is a modern medical management system that connects patients, doctors, and hospital administrators through a unified platform. The system provides secure appointment booking, medical record management, and real-time healthcare coordination.
+- 👤 Role-based Authentication (Doctor / Patient)
+- 💊 Prescription Creation & Sharing
+- 🔗 Connection Requests between Doctors & Patients
+- 🩺 Medical Specializations Management
+- 🧾 QR Code Verification for Prescriptions
+- 🛡️ Secure endpoints with JWT & Guards
+- 🧠 Modular and Scalable Architecture using NestJS
 
-## ✨ Key Features
+----
 
-### For Patients
-- **Secure Registration** with ID verification
-- **Smart Appointment Booking** with conflict detection
-- **Medical History Access** - view all records and reports
-- **Document Upload** - lab results, X-rays, medical reports
-- **Real-time Notifications** - appointment updates and reminders
+## 🧠 Tech Stack
 
-### For Doctors  
-- **Schedule Management** - view and manage appointments
-- **Patient Records** - comprehensive medical history access
-- **Report Generation** - create and update patient records
-- **Specialization-based Organization** - organized by medical specialties
+| Category | Technology |
+|-----------|-------------|
+| **Language** | TypeScript |
+| **Framework** | [NestJS](https://nestjs.com/) |
+| **Database** | MongoDB with Mongoose |
+| **Authentication** | JWT, bcrypt |
+| **API Docs** | Swagger (OpenAPI 3.0) |
+| **Validation** | class-validator & class-transformer |
+| **Deployment (optional)** | Render / Railway |
+| **Testing Tools** | Postman Collection |
 
-### For Administrators
-- **User Verification** - approve patient registrations with ID validation
-- **System Management** - doctors, specializations, and hospital branches
-- **Analytics Dashboard** - insights and performance metrics
-- **Complete Oversight** - manage all platform activities
+---
 
-## 🛠️ Tech Stack
+## ⚙️ Getting Started
 
-- **Backend Framework:** NestJS (Node.js)
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** JWT with Refresh Tokens
-- **File Storage:** Cloudinary / AWS S3 (configurable)
-- **Real-time:** WebSocket for notifications
-- **Security:** Helmet, Rate Limiting, Data Validation
+# 1️⃣ Clone the Repository
+
+```bash
+# Clone repository
+git clone https://github.com/ahmedsalah/MediSync-API.git
+cd medisync-backend
+
+# Install dependencies
+npm install
+
+# Environment setup
+cp .env.example .env
+# Configure your database and other environment variables
+
+# Database setup
+npx prisma migrate dev
+npx prisma generate
+
+# Start development server
+npm run start:dev
+```
 
 ## 📋 Core Modules
 
 ```
 ├── Authentication & Authorization (JWT + Role-based)
 ├── User Management (Patients, Doctors, Admins)
-├── Appointment System (Booking, Scheduling, Conflicts)
-├── Medical Records (History, Reports, Files)
+├── Connection Requests (Doctors <-> Patients)
 ├── File Management (Upload, Storage, Retrieval)
+├── Prescriptions (Creation, Sharing, Verification)
+├── Specializations (Management)
 ├── Notifications (Real-time updates)
 └── Admin Dashboard (Analytics, Management)
 ```
@@ -77,17 +97,15 @@ MediSync is a modern medical management system that connects patients, doctors, 
 src/
 ├── auth/                   # Authentication & Authorization
 ├── users/                  # User management (base)
-├── patients/              # Patient-specific features
-├── doctors/               # Doctor-specific features
-├── appointments/          # Appointment booking system
-├── medical-records/       # Medical history & reports
 ├── specializations/       # Medical specializations
-├── files/                 # File upload & management
+├── prescriptions/         # Prescription management
 ├── notifications/         # Real-time notifications
-├── admin/                 # Admin dashboard & management
-├── common/                # Shared utilities, guards, decorators
+├── Request/               # Connection requests between doctors and patients
 ├── config/                # Application configuration
-└── database/              # Prisma schema & migrations
+├── email/                # Email configuration
+├── QR/              # QR code generation & verification
+├── common/              # Shared utilities, guards, decorators
+└── prisma/              # Prisma schema & migrations 
 ```
 ---
 ### 3. Environment Configuration
@@ -146,14 +164,6 @@ COOKIE_SECRET="your-cookie-secret-key"
 - **Input Sanitization**
 - **Audit Logging** for sensitive operations
 
-## 📊 Database Schema
-
-Built with Prisma ORM featuring:
-- **User Management** with status-based verification
-- **Medical Records** with flexible document attachments  
-- **Appointment Scheduling** with conflict prevention
-- **Role-based Architecture** for different user types
-- **Audit Trails** for compliance and tracking
 
 ## 🚦 Getting Started
 
@@ -162,48 +172,44 @@ Built with Prisma ORM featuring:
 - PostgreSQL 12+
 - npm or yarn
 
-### Installation
-```bash
-# Clone repository
-git clone [repository-url]
-cd medisync-backend
+### 📘 API Endpoints
 
-# Install dependencies
-npm install
+## 🖼️ Swagger UI Preview
 
-# Environment setup
-cp .env.example .env
-# Configure your database and other environment variables
+Below are screenshots from the live Swagger documentation:
 
-# Database setup
-npx prisma migrate dev
-npx prisma generate
+| Module | Preview |
+|--------|----------|
+| Authentication | ![Swagger Authentication](./docs/swagger-auth.png) |
+| Users | ![Swagger Users](./docs/swagger-users.png) |
+| Prescriptions | ![Swagger Prescriptions](./docs/swagger-prescriptions.png) |
+| Specializations | ![Swagger Specializations](./docs/swagger-specializations.png) |
+| Notifications | ![Swagger Notifications](./docs/swagger-notifications.png) |
+| Connection Requests | ![Swagger Connection Requests](./docs/swagger-requests.png) |
+| Qr | ![Swagger Qr](./docs/swagger-qr.png) |
 
-# Start development server
-npm run start:dev
-```
+--- 
 
-## 🧪 API Documentation
+## 🧩 Authentication Schemas
 
-The API follows RESTful conventions with the following main endpoints:
+Below are the main **Data Transfer Objects (DTOs)** used across the MediSync API.  
+Each schema defines the structure and validation rules for the request/response payloads.
 
-```
-Authentication:
-POST /auth/register          # User registration
-POST /auth/login            # User login
-POST /auth/refresh          # Refresh tokens
 
-Appointments:
-GET /appointments           # List appointments
-POST /appointments          # Book appointment
-PUT /appointments/:id       # Update appointment
-DELETE /appointments/:id    # Cancel appointment
+| DTO | Description |
+|-----|--------------|
+| **RegisterInitDto** | Step 1: Select role (Doctor / Patient) during registration |
+| **RegisterBasicDto** | Step 2: Submit basic info (email, password, name, etc.) |
+| **RegisterVerifyEmailDto** | Step 3: Verify user’s email using OTP |
+| **LoginDto** | User login with email and password |
+| **ForgotPasswordDto** | Request password reset via email |
+| **VerifyOtpDto** | Verify OTP for password reset |
+| **ResetPasswordDto** | Set new password after OTP verification |
+| **ResendOtpDto** | Resend verification OTP |
+| **RefreshTokenDto** | Refresh access token using refresh token |
+| **ChangePasswordDto** | Change current password (authenticated users) |
 
-Medical Records:
-GET /medical-records        # Patient medical history
-POST /medical-records       # Add new record
-PUT /medical-records/:id    # Update record
-```
+---
 
 ## 🔄 Development Workflow
 
@@ -220,12 +226,20 @@ This project follows agile development principles with:
 - Basic appointment booking
 - Medical record management
 - Admin user management
+- Role-based access control
+- Email notifications for important events
+- QR code generation & verification
+- Connection requests between doctors and patients
+- Notifications system for events like appointment confirmations, requests, and messages
+- Chat system for real-time communication between doctors and patients
+- File upload/download for medical records
+
 
 ### Phase 2 (Enhanced)
-- Real-time chat system
 - Advanced file management
 - Detailed analytics
 - Mobile API optimization
+
 
 ### Phase 3 (Advanced)
 - Telemedicine integration

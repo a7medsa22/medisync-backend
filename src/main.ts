@@ -62,9 +62,10 @@ async function bootstrap() {
       .setVersion('1.0')
       .addTag('Authentication', 'User authentication endpoints')
       .addTag('Users', 'User management endpoints')
-      .addTag('Appointments', 'Appointment booking endpoints')
-      .addTag('Medical Records', 'Medical records management')
-      .addTag('Admin', 'Administrative endpoints')
+      .addTag('Requests & Connections', 'Request a connection management endpoints')
+      .addTag('Prescriptions', 'Prescription management endpoints')
+      .addTag('QR Code', 'Qr code endpoints')
+      .addTag('Specializations', 'Specialization management endpoints')
       .addBearerAuth(
         {
           type: 'http',

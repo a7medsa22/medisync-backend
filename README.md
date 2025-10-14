@@ -54,9 +54,41 @@ It provides secure authentication, appointment booking, prescription management,
 
 ---
 
+
+## 🏗️ Project Structure
+
+```
+src/
+├── auth/                   # Authentication & Authorization
+├── users/                  # User management (base)
+├── specializations/       # Medical specializations
+├── prescriptions/         # Prescription management
+├── notifications/         # Real-time notifications
+├── Request/               # Connection requests between doctors and patients
+├── config/                # Application configuration
+├── email/                # Email configuration
+├── QR/              # QR code generation & verification
+├── common/              # Shared utilities, guards, decorators
+└── prisma/              # Prisma schema & migrations 
+```
+---
+
+## 🔐 Security Features
+
+- **JWT Authentication** with refresh token rotation
+- **Role-based Access Control** (RBAC)
+- **Data Validation** with class-validator
+- **Rate Limiting** to prevent abuse
+- **Helmet Security Headers**
+- **CORS Configuration**
+- **Input Sanitization**
+- **Audit Logging** for sensitive operations
+
+---
+
 ## ⚙️ Getting Started
 
-# 1️⃣ Clone the Repository
+#  Clone the Repository
 
 ```bash
 # Clone repository
@@ -77,38 +109,9 @@ npx prisma generate
 # Start development server
 npm run start:dev
 ```
-
-## 📋 Core Modules
-
-```
-├── Authentication & Authorization (JWT + Role-based)
-├── User Management (Patients, Doctors, Admins)
-├── Connection Requests (Doctors <-> Patients)
-├── File Management (Upload, Storage, Retrieval)
-├── Prescriptions (Creation, Sharing, Verification)
-├── Specializations (Management)
-├── Notifications (Real-time updates)
-└── Admin Dashboard (Analytics, Management)
-```
-
-## 🏗️ Project Structure
-
-```
-src/
-├── auth/                   # Authentication & Authorization
-├── users/                  # User management (base)
-├── specializations/       # Medical specializations
-├── prescriptions/         # Prescription management
-├── notifications/         # Real-time notifications
-├── Request/               # Connection requests between doctors and patients
-├── config/                # Application configuration
-├── email/                # Email configuration
-├── QR/              # QR code generation & verification
-├── common/              # Shared utilities, guards, decorators
-└── prisma/              # Prisma schema & migrations 
-```
 ---
-### 3. Environment Configuration
+
+# ⚙️ Environment Configuration
 
 Create a `.env` file in the root directory:
 
@@ -152,20 +155,6 @@ CORS_ORIGIN="http://localhost:3000,http://localhost:3001"
 COOKIE_SECRET="your-cookie-secret-key"
 ```
 ---
-
-## 🔐 Security Features
-
-- **JWT Authentication** with refresh token rotation
-- **Role-based Access Control** (RBAC)
-- **Data Validation** with class-validator
-- **Rate Limiting** to prevent abuse
-- **Helmet Security Headers**
-- **CORS Configuration**
-- **Input Sanitization**
-- **Audit Logging** for sensitive operations
-
-
-## 🚦 Getting Started
 
 ### Prerequisites
 - Node.js 18+ 

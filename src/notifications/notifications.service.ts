@@ -64,6 +64,18 @@ export class NotificationsService {
     });
   }
 
+  
+  /**
+   * Mark all notifications as read
+   */
+  async markAllAsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true }
+    });
+  }
+
+
 
   async getNotifications(userId: string) {
     return this.prisma.notification.findMany({

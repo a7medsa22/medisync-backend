@@ -52,6 +52,7 @@ export class QrController {
  async scanQr(@CurrentUser() user: any, @Body() body: ScanQrAndValidateDto) {
     return this.qrService.scanAndConnectForPatient (user,  body );
   }
+  
 
    @Post('validate')
   @HttpCode(HttpStatus.OK)

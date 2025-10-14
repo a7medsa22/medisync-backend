@@ -177,6 +177,7 @@ return {
     };
   }
   
+  
   /**
    * Validate QR token (check expiry, usage, etc)
    */

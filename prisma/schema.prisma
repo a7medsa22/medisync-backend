@@ -32,6 +32,7 @@ enum TokenType {
 enum NotificationType {
   CONNECTION_REQUEST
   CONNECTION_ACCEPTED
+  NEW_CONNECTION
   QR_SCANNED
   NEW_MESSAGE
 }

@@ -3,15 +3,13 @@ import { GenerateQrDto, QrTokenType, ScanQrAndValidateDto } from './dto/generate
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QrConnectionResponseDto, QrTokenResponseDto } from './dto/qr-response.dto';
 import { ConfigService } from '@nestjs/config';
-import { nanoid } from 'nanoid';
-import * as QRCode from 'qrcode';
-import * as crypto from 'crypto'
-import { doctorInclude, patientInclude, userInclude } from '../common/utils/include.utils';
+import {  userInclude } from '../common/utils/include.utils';
 import { QrProvider } from './qr.provider';
 import { ConnectionType } from '@prisma/client';
 import { ActiveQrItemDto } from './dto/active-qr-list.dto';
 import {Cron,CronExpression} from '@nestjs/schedule'
 import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 
 @Injectable()
@@ -19,7 +17,9 @@ export class QrService {
 
     constructor(private readonly prisma: PrismaService,
       private readonly config:ConfigService,
-      private readonly qrProvider:QrProvider
+      private readonly qrProvider:QrProvider,
+      private readonly notificationsService: NotificationsService, 
+
        
     ) {}
 
@@ -148,6 +148,10 @@ export class QrService {
         connectedAt: new Date(),
       }
     });
+
+    // ✅ Send notifications
+    await this.notificationsService.
+
     
     await this.prisma.qrToken.update({
       where:{id:qrToken.id},

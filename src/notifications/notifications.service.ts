@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-
-
 @Injectable()
 export class NotificationsService {
     constructor(private prisma: PrismaService) {}
@@ -43,6 +41,22 @@ export class NotificationsService {
       { doctorEmail }
     );
   }
+  /**
+ * Notify doctor of new patient connection
+ */
+  async notifyDoctorNewConnection(
+  doctorUserId: string,
+  patientName: string,
+  patientEmail: string
+) {
+  return this.createNotification(
+    doctorUserId,
+    NotificationType.NEW_MESSAGE, // نوع جديد في الـ enum
+    'New Patient Connection',
+    `${patientName} has connected with you via QR.`,
+    { patientEmail }
+  );
+}
     /**
    * Get user notifications
    */
@@ -81,6 +95,6 @@ export class NotificationsService {
   async deleteNotification(notificationId: string) {
     return this.prisma.notification.delete({
       where: { id: notificationId }
-    });
+    }); 
   }
 }

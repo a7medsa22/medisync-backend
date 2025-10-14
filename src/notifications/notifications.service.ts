@@ -75,13 +75,12 @@ export class NotificationsService {
     });
   }
 
-
-
-  async getNotifications(userId: string) {
-    return this.prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
+/**
+   * Delete notification
+   */
+  async deleteNotification(notificationId: string) {
+    return this.prisma.notification.delete({
+      where: { id: notificationId }
     });
   }
-
 }

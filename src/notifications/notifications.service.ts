@@ -43,7 +43,17 @@ export class NotificationsService {
       { doctorEmail }
     );
   }
-  
+    /**
+   * Get user notifications
+   */
+  async getUserNotifications(userId: string, limit = 10) {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    });
+  }
+
 
   async getNotifications(userId: string) {
     return this.prisma.notification.findMany({

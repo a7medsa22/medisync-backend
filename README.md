@@ -1,6 +1,7 @@
 ## 🏥 MediSync API
 
-**MediSync** is a **Medical Medical follow-up & Records Management System** built with **NestJS**, designed to streamline healthcare processes between doctors and patients.  
+**MediSync** is a **Medical follow-up & Records Management System** built with **NestJS**, designed to streamline healthcare processes between doctors and patients.  
+MediSync aims to simplify doctor-patient interactions and provide secure digital healthcare management.  
 It provides secure authentication, appointment booking, prescription management, and communication modules — all under a modular, scalable backend architecture.
 
 <p align="center">
@@ -176,6 +177,8 @@ Below are screenshots from the live Swagger documentation:
 | Connection Requests | ![Swagger Connection Requests](./docs/swagger-requests.png) |
 | Qr | ![Swagger Qr](./docs/swagger-qr.png) |
 
+Each module contains detailed schemas, responses, and error examples.
+
 --- 
 
 ## 🧩 Authentication Schemas
@@ -256,5 +259,7 @@ This project follows agile development principles with:
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
+
+🧑‍💻 Live Swagger Docs (Demo): https://medisync-api.onrender.com/api-docs
 
 **Built with ❤️ for better healthcare management**

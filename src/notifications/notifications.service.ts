@@ -51,7 +51,7 @@ export class NotificationsService {
 ) {
   return this.createNotification(
     doctorUserId,
-    NotificationType.NEW_MESSAGE, // نوع جديد في الـ enum
+    NotificationType.NEW_CONNECTION, 
     'New Patient Connection',
     `${patientName} has connected with you via QR.`,
     { patientEmail }

@@ -22,7 +22,17 @@ export class QrService {
 
        
     ) {}
-
+private userIncludeNotification ={
+  user: {
+    select: {
+      id:true,
+      firstName: true,
+      lastName: true,
+      status: true,
+      email:true,
+    },
+  },
+}
     async generateConnectionQrForDoctor(user: JwtPayload, dto: GenerateQrDto) {
   if (!user.doctorId) {
     throw new BadRequestException('Doctor profile not found');
@@ -36,7 +46,7 @@ export class QrService {
    const doctor = await this.prisma.doctor.findUnique({
     where:{id:doctorId },
     include:{
-        ...userInclude,
+        ...this.userIncludeNotification,
         specialization: true,
     }
    });
@@ -107,7 +117,7 @@ export class QrService {
       const patient = await this.prisma.patient.findUnique({
       where: { id: patientId },
       include: {
-        ...userInclude,
+          ...this.userIncludeNotification,  
       },
     });
     if(!patient){
@@ -120,7 +130,7 @@ export class QrService {
     const doctor = await this.prisma.doctor.findUnique({
       where: { id: qrToken.doctorId },
       include: {
-        ...userInclude,
+        ...this.userIncludeNotification,
         specialization: true,
       }
     });
@@ -150,7 +160,16 @@ export class QrService {
     });
 
     // ✅ Send notifications
-    await this.notificationsService.
+    await this.notificationsService.notifyDoctorNewConnection(
+      doctor.userId,
+      `${patient.user.firstName} ${patient.user.lastName}`,
+      doctor.user.email,
+    );
+    await this.notificationsService.notifyPatientConnectionSuccess(
+      patient.userId,
+      `${doctor.user.firstName} ${doctor.user.lastName}`,
+      patient.user.email,
+    );
 
     
     await this.prisma.qrToken.update({

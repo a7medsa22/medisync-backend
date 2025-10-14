@@ -173,7 +173,6 @@ Below are screenshots from the live Swagger documentation:
 | Users | ![Swagger Users](./docs/swagger-users.png) |
 | Prescriptions | ![Swagger Prescriptions](./docs/swagger-prescriptions.png) |
 | Specializations | ![Swagger Specializations](./docs/swagger-specializations.png) |
-| Notifications | ![Swagger Notifications](./docs/swagger-notifications.png) |
 | Connection Requests | ![Swagger Connection Requests](./docs/swagger-requests.png) |
 | Qr | ![Swagger Qr](./docs/swagger-qr.png) |
 

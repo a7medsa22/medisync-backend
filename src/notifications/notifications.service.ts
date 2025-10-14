@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-export enum NotificationType {
-  CONNECTION_REQUEST = 'CONNECTION_REQUEST',
-  CONNECTION_ACCEPTED = 'CONNECTION_ACCEPTED',
-  QR_SCANNED = 'QR_SCANNED',
-  NEW_MESSAGE = 'NEW_MESSAGE'
-}
+
 
 @Injectable()
 export class NotificationsService {
@@ -30,6 +26,24 @@ export class NotificationsService {
       }
     });
   }
+
+  /**
+   * Notify patient of successful connection
+   */
+   async notifyPatientConnectionSuccess(
+    patientUserId: string,
+    doctorName: string,
+    doctorEmail: string
+  ) {
+    return this.createNotification(
+      patientUserId,
+      NotificationType.CONNECTION_ACCEPTED,
+      'Connection Successful',
+      `You are now connected with Dr. ${doctorName}`,
+      { doctorEmail }
+    );
+  }
+  
 
   async getNotifications(userId: string) {
     return this.prisma.notification.findMany({

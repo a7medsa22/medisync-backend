@@ -153,12 +153,26 @@ model Notification {
 model Patient {
   id               String    @id @default(uuid())
   userId           String    @unique
+   // Personal Info
+   profilePhoto   String?
   dateOfBirth      DateTime?
   gender           String?
-  address          String?
-  emergencyContact String?
   bloodType        String?
-  allergies        String?
+  height         Float?
+  weight         Float?
+
+// Contact & Address
+  phone           String?
+  address          String?
+  city           String?
+  governorate    String?
+
+   // Medical Info
+  allergies      String?
+  chronicDiseases String?
+  currentMedications String?
+  emergencyContact String?
+  emergencyPhone String?
 
   // Relations
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -169,6 +183,8 @@ model Patient {
   prescriptions       Prescription[]
     qrTokens                QrToken[]  // ✅ NEW - QR codes used by patient
 
+
+  @@index([userId])
 
   @@map("patients")
 }
@@ -261,16 +277,28 @@ model FollowUpRequest  {
 
 model MedicalRecord {
   id        String @id @default(uuid())
-  patientId String
-  doctorId      String
+  patientId String?
+  doctorId      String?
+  connectionId   String?          // المتعلق بأي connection
+  
+  // File Info
+  fileName       String           // Original filename
+  fileUrl        String           // Storage URL/path
+  fileType       DocumentType         // X_RAY, LAB_RESULT, PRESCRIPTION, etc.
+  fileSize       Int              // in bytes
+  mimeType       String           // image/jpeg, application/pdf, etc.
   
 
-  recordType  String
+  // Medical Info
   title       String
   description String?
-  diagnosis   String?
   treatment   String?
   medications String?
+  uploadedBy     String           // USER_ID (patient or doctor)
+   // Status
+  isVerified     Boolean          @default(false) // Doctor verified
+  notes          String?          // Doctor's notes on the file
+
   
 
   // File attachments
@@ -281,9 +309,15 @@ model MedicalRecord {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient? @relation(fields: [patientId], references: [id])
+  doctor  Doctor? @relation(fields: [doctorId],references: [id])
+  connection     Connection?      @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  
 
-  @@map("medical_records")
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([connectionId])
+  @@index([createdAt])
 }
 model Prescription {
   id            String  @id @default(uuid())

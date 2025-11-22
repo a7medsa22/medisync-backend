@@ -217,12 +217,11 @@ model Doctor {
   // Relations
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialization Specialization? @relation(fields: [specializationId], references: [id])
-  qrTokens                QrToken[]  // ✅ NEW
-
-
+  qrTokens                QrToken[]  
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]
   prescriptions       Prescription[]
+  medicalRecords      MedicalRecord[]
 
   @@map("doctors")
 }
@@ -243,6 +242,7 @@ model DoctorPatientConnection {
   
   // Relations
   prescriptions   Prescription[]
+  medicalRecords  MedicalRecord[]
   doctor          Doctor            @relation(fields: [doctorId], references: [id])
   patient         Patient           @relation(fields: [patientId], references: [id])
   
@@ -311,7 +311,7 @@ model MedicalRecord {
   // Relations
   patient Patient? @relation(fields: [patientId], references: [id])
   doctor  Doctor? @relation(fields: [doctorId],references: [id])
-  connection     Connection?      @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  connection     DoctorPatientConnection?      @relation(fields: [connectionId], references: [id], onDelete: SetNull)
   
 
   @@index([patientId])

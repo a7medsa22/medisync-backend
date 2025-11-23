@@ -254,7 +254,7 @@ model DoctorPatientConnection {
   medicalRecords  MedicalRecord[]
   doctor          Doctor            @relation(fields: [doctorId], references: [id])
   patient         Patient           @relation(fields: [patientId], references: [id])
-  chat            Chat
+  chat            Chat?
   
   @@unique([doctorId, patientId])
   @@index([doctorId])
@@ -391,7 +391,7 @@ model QrToken {
 }
 model Chat {
   id                    String  @id  @default(uuid())
-  connectionId          String
+  connectionId          String  @unique
   
   // chat filed from performance 
   lastMassageAt         DateTime?
@@ -412,7 +412,7 @@ model Chat {
 }
 
 model Massage {
-  id            String  @default(uuid())
+  id            String  @id @default(uuid())
   chatId        String
   senderId      String
   

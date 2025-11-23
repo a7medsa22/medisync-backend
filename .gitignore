@@ -3,6 +3,8 @@
 /node_modules
 /build
 /create-issues.js
+# issues
+.github/issues
 
 # Logs
 logs
@@ -46,6 +48,7 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
 
 # Runtime data
 pids

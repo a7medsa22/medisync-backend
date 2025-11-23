@@ -35,6 +35,7 @@ enum NotificationType {
   NEW_CONNECTION
   QR_SCANNED
   NEW_MESSAGE
+  NEW_CHAT_MESSAGE 
 }
 
 
@@ -97,8 +98,11 @@ model User {
   otps                Otp[]
   tokens              AuthToken[]
   notifications       Notification[]
+  sendMessages        Massage[]
 
 
+  @@index([status])
+  @@index([isActive])
   @@map("users")
 }
 
@@ -147,6 +151,8 @@ model Notification {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+   @@index([createdAt])
+   @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -181,7 +187,7 @@ model Patient {
   connections         DoctorPatientConnection[]
   followUpRequests    FollowUpRequest[]
   prescriptions       Prescription[]
-    qrTokens                QrToken[]  // ✅ NEW - QR codes used by patient
+  qrTokens           QrToken[]  // ✅ NEW - QR codes used by patient
 
 
   @@index([userId])
@@ -239,17 +245,23 @@ model DoctorPatientConnection {
   
   connectedAt     DateTime          @default(now())
   lastActivityAt  DateTime?
+
+  lastMassageAt   DateTime?
+  unreadCount     Int?
   
   // Relations
   prescriptions   Prescription[]
   medicalRecords  MedicalRecord[]
   doctor          Doctor            @relation(fields: [doctorId], references: [id])
   patient         Patient           @relation(fields: [patientId], references: [id])
+  chat            Chat
   
   @@unique([doctorId, patientId])
   @@index([doctorId])
   @@index([patientId])
   @@index([status])
+  @@index([status,connectedAt])
+
   @@map("doctor_patient_connections")
 }
 
@@ -318,6 +330,7 @@ model MedicalRecord {
   @@index([doctorId])
   @@index([connectionId])
   @@index([createdAt])
+  @@index([recordDate])
 }
 model Prescription {
   id            String  @id @default(uuid())
@@ -348,6 +361,9 @@ model Prescription {
   doctor        Doctor  @relation(fields: [doctorId], references: [id])
   patient       Patient @relation(fields: [patientId], references: [id])
 
+  @@index([isActive])
+  @@index([prescribedAt])
+  
   @@map("prescriptions")
 }
 
@@ -372,4 +388,57 @@ model QrToken {
   @@index([expiresAt])
   @@index([isUsed])
   @@map("qr_tokens")
+}
+model Chat {
+  id                    String  @id  @default(uuid())
+  connectionId          String
+  
+  // chat filed from performance 
+  lastMassageAt         DateTime?
+  LastMassagePreview    String?  @db.VarChar(255) // preview of last 255 characters
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+ //Relations    
+  connection         DoctorPatientConnection  @relation(fields: [connectionId], references: [id])
+  massages           Massage[]
+
+ @@index([connectionId])
+ @@index([lastMassageAt])
+ 
+@@map("chats")
+
+}
+
+model Massage {
+  id            String  @default(uuid())
+  chatId        String
+  senderId      String
+  
+  content      String   @db.Text
+  massageType  String   @default("TEXT")  // TEXT, SYSTEM, FILE (for future expansion)
+
+  isRead    Boolean    @default(false)
+  readAt    DateTime?
+
+  isDeleted    Boolean    @default(false)
+  deletedAt    DateTime?
+
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+//Relations
+  chat Chat   @relation(fields: [chatId], references: [id])
+  sender User @relation(fields: [senderId],references: [id])
+
+@@index([chatId])
+@@index([senderId])
+@@index([createdAt])
+@@index([isRead])
+@@index([chatId,createdAt])
+
+@@map("massages")
+
 }

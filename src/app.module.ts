@@ -12,6 +12,7 @@ import { RequestsModule } from './requests/requests.module';
 import { PrescriptionsModule } from './prescriptions/prescriptions.module';
 import { QrModule } from './qr/qr.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ChatModule } from './chat/chat.module';
 
 
 @Module({
@@ -55,7 +56,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     RequestsModule,
     PrescriptionsModule,
     QrModule,
-    NotificationsModule
+    NotificationsModule,
+    ChatModule
   ],
  providers: [
   {

@@ -1,4 +1,4 @@
- export   const patientInclude = {
+ export const patientInclude = {
     patient: {
       include: {
         user: {

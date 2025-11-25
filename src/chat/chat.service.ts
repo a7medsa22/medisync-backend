@@ -4,15 +4,14 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { ConnectionStatus, PrismaClient, UserRole } from '@prisma/client';
-import {
-    chatDetailsSelect,
-    connectionSelect,
-} from 'src/common/selects/include.utils';
+import { chatDetailsSelect, connectionSelect, lastMessageSelect } from 'src/common/selects/chat.select';
 import { ChatDetailsResponseDto } from './dto';
+import { RedisService } from 'src/common/cache/redis.service';
+import { ChatMapper } from 'src/common/mappers/chat.mapper';
 
 @Injectable()
 export class ChatService {
-    constructor(private readonly prisma: PrismaClient) { }
+    constructor(private readonly prisma: PrismaClient, private readonly redis: RedisService) { }
 
     async getOrCreateChat(connectionId: string) {
         const connection = await this.prisma.doctorPatientConnection.findUnique({
@@ -66,6 +65,11 @@ export class ChatService {
     }
 
     async getUserChats(userId: string, role: UserRole) {
+
+        const cacheKey = `chat:user-chats:${userId}`;
+        const cached = await this.redis.get(cacheKey);
+        if (cached) return cached;
+
         let profileId: string;
 
         if (role === UserRole.DOCTOR) {
@@ -95,64 +99,32 @@ export class ChatService {
                     : { patientId: profileId, status: ConnectionStatus.ACTIVE },
 
             select: {
-                id: true,
-                lastMessageAt: true,
-                unreadCount: true,
-                status: true,
-
-                doctor: connectionSelect.doctor,
-                patient: connectionSelect.patient,
+                ...connectionSelect,
 
                 chat: {
                     select: {
                         id: true,
-                        messages: {
-                            take: 1,
-                            orderBy: { createdAt: 'desc' },
-                            select: {
-                                id: true,
-                                content: true,
-                                messageType: true,
-                                senderId: true,
-                                createdAt: true,
-                                isRead: true,
-                            },
-                        },
+                        messages: lastMessageSelect.messages,
                     },
                 },
             },
             orderBy: { lastMessageAt: 'desc' },
         });
 
-        return connections.map((c) => {
-            const participant =
-                role === UserRole.DOCTOR
-                    ? {
-                        id: c.patient.id,
-                        userId: c.patient.user.id,
-                        name: `${c.patient.user.firstName} ${c.patient.user.lastName}`,
-                        role: 'PATIENT',
-                    }
-                    : {
-                        id: c.doctor.id,
-                        userId: c.doctor.user.id,
-                        name: `${c.doctor.user.firstName} ${c.doctor.user.lastName}`,
-                        role: 'DOCTOR',
-                    };
-
-            return {
-                connectionId: c.id,
-                chatId: c.chat?.id || null,
-                participant,
-                lastMessage: c.chat?.messages[0] || null,
-                lastMessageAt: c.lastMessageAt,
-                unreadCount: c.unreadCount,
-                status: c.status,
-            };
-        });
+        return connections.map((c) => ChatMapper.toConnectionListItem(c, role));
     }
 
     async getChatDetails(chatId: string, userId: string) {
+        const cacheKey = `chat:details:${chatId}`;
+        const cached = (await this.redis.get(cacheKey)) as ChatDetailsResponseDto | null;
+        if (cached) {
+            // still verify access quickly if you want extra safety
+            if (!(cached.doctor.userId === userId || cached.patient.userId === userId)) {
+                throw new ForbiddenException('You do not have access to this chat');
+            }
+            return cached;
+        }
+
         const chat = await this.prisma.chat.findUnique({
             where: { id: chatId },
             select: chatDetailsSelect,
@@ -162,25 +134,18 @@ export class ChatService {
             throw new NotFoundException('Chat not found');
         }
 
+          if (!(chat.connection.doctor.user.id === userId || chat.connection.patient.user.id === userId)) {
+    throw new ForbiddenException('You do not have access to this chat');
+  }
+
         if (!this.hasAccess(chat, userId)) {
-        throw new ForbiddenException('No access');
-    }
+            throw new ForbiddenException('No access');
+        }
 
-        const dto: ChatDetailsResponseDto = {
-            chatId: chat.id,
-            connectionId: chat.connection.id,
-            doctor: {
-                id: chat.connection.doctor.id,
-                userId: chat.connection.doctor.user.id,
-                name: `${chat.connection.doctor.user.firstName} ${chat.connection.doctor.user.lastName}`,
-            },
-            patient: {
-                id: chat.connection.patient.id,
-                userId: chat.connection.patient.user.id,
-                name: `${chat.connection.patient.user.firstName} ${chat.connection.patient.user.lastName}`,
-            },
-        };
+         const dto = ChatMapper.toChatDetailsDto(chat);
 
+        await this.redis.set(cacheKey, dto, 300); // cache for 5 minutes
+        
         return dto;
     }
 
@@ -240,24 +205,24 @@ export class ChatService {
     }
 
     async incrementUnreadCount(connectionId: string, recipientRole: UserRole) {
-    await this.prisma.doctorPatientConnection.update({
-      where: { id: connectionId },
-      data: {
-        unreadCount: { increment: 1 },
-      },
-    });
-  }
+        await this.prisma.doctorPatientConnection.update({
+            where: { id: connectionId },
+            data: {
+                unreadCount: { increment: 1 },
+            },
+        });
+    }
 
-   async resetUnreadCount(chatId: string, userId: string) {
-    const chat = await this.getChatDetails(chatId, userId);
+    async resetUnreadCount(chatId: string, userId: string) {
+        const chat = await this.getChatDetails(chatId, userId);
 
-    await this.prisma.doctorPatientConnection.update({
-      where: { id: chat.connectionId },
-      data: {
-        unreadCount: 0,
-      },
-    });
-  }
+        await this.prisma.doctorPatientConnection.update({
+            where: { id: chat.connectionId },
+            data: {
+                unreadCount: 0,
+            },
+        });
+    }
 
 
 
@@ -270,11 +235,11 @@ export class ChatService {
     private shortenPreview(text: string) {
         return text.length > 200 ? text.slice(0, 200) : text;
     }
-    private hasAccess(chat:any, userId:string) {
-    return (
-        chat.connection.doctor.user.id === userId ||
-        chat.connection.patient.user.id === userId
-    );
-}
+    private hasAccess(chat: any, userId: string) {
+        return (
+            chat.connection.doctor.user.id === userId ||
+            chat.connection.patient.user.id === userId
+        );
+    }
 
 }

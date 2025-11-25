@@ -1,7 +1,6 @@
 import { UserRole } from '@prisma/client';
-import type participantSelect from '../selects/participant.select'
 export const ChatMapper = {
-  toParticipantDto(participant:participantSelect) {
+  toParticipantDto(participant) {
     return {
       id: participant.id,
       userId: participant.userId,

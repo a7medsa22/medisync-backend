@@ -41,20 +41,4 @@ export const participantSelect = {
   user: { select: userInclude},
 }as const;
 
-export const chatDetailsSelect = {
-  id: true,
-  connection: {
-    select: {
-      id: true,
-      doctor: { select: participantSelect },
-      patient: { select: participantSelect },
-    },
-  },
-}as const;
 
-export const connectionSelect = {
-      id: true,
-      status: true,
-      doctor: { select: participantSelect },
-      patient: { select: participantSelect },
-} as const;

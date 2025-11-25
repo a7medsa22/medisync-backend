@@ -98,7 +98,7 @@ model User {
   otps                Otp[]
   tokens              AuthToken[]
   notifications       Notification[]
-  sendMessages        Massage[]
+  sendMessages        Message[]
 
 
   @@index([status])
@@ -246,7 +246,7 @@ model DoctorPatientConnection {
   connectedAt     DateTime          @default(now())
   lastActivityAt  DateTime?
 
-  lastMassageAt   DateTime?
+  lastMessageAt   DateTime?
   unreadCount     Int?
   
   // Relations
@@ -394,30 +394,30 @@ model Chat {
   connectionId          String  @unique
   
   // chat filed from performance 
-  lastMassageAt         DateTime?
-  LastMassagePreview    String?  @db.VarChar(255) // preview of last 255 characters
+  lastMessageAt         DateTime?
+  LastMessagePreview    String?  @db.VarChar(255) // preview of last 255 characters
 
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
  //Relations    
   connection         DoctorPatientConnection  @relation(fields: [connectionId], references: [id])
-  massages           Massage[]
+  messages           Message[]
 
  @@index([connectionId])
- @@index([lastMassageAt])
+ @@index([lastMessageAt])
  
 @@map("chats")
 
 }
 
-model Massage {
+model Message {
   id            String  @id @default(uuid())
   chatId        String
   senderId      String
   
   content      String   @db.Text
-  massageType  String   @default("TEXT")  // TEXT, SYSTEM, FILE (for future expansion)
+  messageType  String   @default("TEXT")  // TEXT, SYSTEM, FILE (for future expansion)
 
   isRead    Boolean    @default(false)
   readAt    DateTime?
@@ -439,6 +439,6 @@ model Massage {
 @@index([isRead])
 @@index([chatId,createdAt])
 
-@@map("massages")
+@@map("messages")
 
 }

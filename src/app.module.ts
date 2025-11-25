@@ -13,6 +13,7 @@ import { PrescriptionsModule } from './prescriptions/prescriptions.module';
 import { QrModule } from './qr/qr.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ChatModule } from './chat/chat.module';
+import { MessageService } from './message/message.service';
 
 
 @Module({
@@ -69,6 +70,7 @@ import { ChatModule } from './chat/chat.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    MessageService,
   ],
 })
 export class AppModule {}

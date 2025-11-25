@@ -395,7 +395,7 @@ model Chat {
   
   // chat filed from performance 
   lastMessageAt         DateTime?
-  LastMessagePreview    String?  @db.VarChar(255) // preview of last 255 characters
+  lastMessagePreview    String?  @db.VarChar(255) // preview of last 255 characters
 
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

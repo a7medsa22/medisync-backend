@@ -7,7 +7,7 @@ import { ConnectionStatus, PrismaClient, UserRole } from '@prisma/client';
 import {
     chatDetailsSelect,
     connectionSelect,
-} from 'src/common/utils/include.utils';
+} from 'src/common/selects/include.utils';
 import { ChatDetailsResponseDto } from './dto';
 
 @Injectable()
@@ -55,11 +55,11 @@ export class ChatService {
             chatId: chat.id,
             connectionId: connection.id,
             doctor: {
-                id: connection.doctor.user.id,
+                id: connection.doctor.id,
                 name: `${connection.doctor.user.firstName} ${connection.doctor.user.lastName}`,
             },
             patient: {
-                id: connection.patient.user.id,
+                id: connection.patient.id,
                 name: `${connection.patient.user.firstName} ${connection.patient.user.lastName}`,
             },
         };
@@ -162,14 +162,9 @@ export class ChatService {
             throw new NotFoundException('Chat not found');
         }
 
-        // 2️⃣ Access control
-        const hasAccess =
-            chat.connection.doctor.user.id === userId ||
-            chat.connection.patient.user.id === userId;
-
-        if (!hasAccess) {
-            throw new ForbiddenException('You do not have access to this chat');
-        }
+        if (!this.hasAccess(chat, userId)) {
+        throw new ForbiddenException('No access');
+    }
 
         const dto: ChatDetailsResponseDto = {
             chatId: chat.id,
@@ -208,7 +203,63 @@ export class ChatService {
 
         return result._sum.unreadCount || 0;
     }
-    
+
+    async verifyUserAccess(chatId: string, userId: string) {
+        const chat = await this.prisma.chat.findUnique({
+            where: { id: chatId },
+            select: chatDetailsSelect,
+        });
+
+        if (!chat) {
+            throw new NotFoundException('Chat not found');
+        }
+
+        return chat.connection.doctor.user.id === userId ||
+            chat.connection.patient.user.id === userId;
+    }
+
+    async updateConnectionLastMessage(
+        connectionId: string,
+        lastMessageAt: Date,
+        preview: string,
+    ) {
+        const previewText = this.shortenPreview(preview);
+
+        await this.prisma.$transaction([
+            this.prisma.doctorPatientConnection.update({
+                where: { id: connectionId },
+                data: { lastMessageAt, lastActivityAt: lastMessageAt },
+            }),
+            this.prisma.chat.update({
+                where: { connectionId },
+                data: { lastMessageAt, lastMessagePreview: previewText },
+            }),
+        ]);
+
+        return true;
+    }
+
+    async incrementUnreadCount(connectionId: string, recipientRole: UserRole) {
+    await this.prisma.doctorPatientConnection.update({
+      where: { id: connectionId },
+      data: {
+        unreadCount: { increment: 1 },
+      },
+    });
+  }
+
+   async resetUnreadCount(chatId: string, userId: string) {
+    const chat = await this.getChatDetails(chatId, userId);
+
+    await this.prisma.doctorPatientConnection.update({
+      where: { id: chat.connectionId },
+      data: {
+        unreadCount: 0,
+      },
+    });
+  }
+
+
 
 
     private async getProfile(userId: string, role: UserRole) {
@@ -216,5 +267,14 @@ export class ChatService {
             ? this.prisma.doctor.findUnique({ where: { userId } })
             : this.prisma.patient.findUnique({ where: { userId } });
     }
+    private shortenPreview(text: string) {
+        return text.length > 200 ? text.slice(0, 200) : text;
+    }
+    private hasAccess(chat:any, userId:string) {
+    return (
+        chat.connection.doctor.user.id === userId ||
+        chat.connection.patient.user.id === userId
+    );
+}
 
 }

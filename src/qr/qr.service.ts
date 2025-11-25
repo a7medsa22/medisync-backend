@@ -3,7 +3,7 @@ import { GenerateQrDto, QrTokenType, ScanQrAndValidateDto } from './dto/generate
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QrConnectionResponseDto, QrTokenResponseDto } from './dto/qr-response.dto';
 import { ConfigService } from '@nestjs/config';
-import {  userInclude } from '../common/utils/include.utils';
+import {  userInclude } from '../common/selects/include.utils';
 import { QrProvider } from './qr.provider';
 import { ConnectionType } from '@prisma/client';
 import { ActiveQrItemDto } from './dto/active-qr-list.dto';

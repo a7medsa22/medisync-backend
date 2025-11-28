@@ -40,6 +40,3 @@ export const chatDetailsSelectWithStatus = {
   connection: { select: { status: true } }
 }as const;
 
-export const chatSelectMarkAsRead{
-  
-}

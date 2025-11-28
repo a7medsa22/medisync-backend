@@ -134,18 +134,18 @@ export class ChatService {
             throw new NotFoundException('Chat not found');
         }
 
-          if (!(chat.connection.doctor.user.id === userId || chat.connection.patient.user.id === userId)) {
-    throw new ForbiddenException('You do not have access to this chat');
-  }
+        if (!(chat.connection.doctor.user.id === userId || chat.connection.patient.user.id === userId)) {
+            throw new ForbiddenException('You do not have access to this chat');
+        }
 
         if (!this.hasAccess(chat, userId)) {
             throw new ForbiddenException('No access');
         }
 
-         const dto = ChatMapper.toChatDetailsDto(chat);
+        const dto = ChatMapper.toChatDetailsDto(chat);
 
         await this.redis.set(cacheKey, dto, 300); // cache for 5 minutes
-        
+
         return dto;
     }
 
@@ -226,38 +226,34 @@ export class ChatService {
 
     // Fetch minimal chat header info with caching
     async getChatHeader(chatId: string) {
-  const cacheKey = `chat:header:${chatId}`;
+        const cacheKey = `chat:header:${chatId}`;
 
-  // 1) Try cache
-  const cached = await this.redis.get(cacheKey);
-  if (cached) return cached;
+        // 1) Try cache
+        const cached = await this.redis.get(cacheKey);
+        if (cached) return cached;
 
-  // 2) Fetch minimal data
-  const chat = await this.prisma.chat.findUnique({
-    where: { id: chatId },
-    select: {
-      id: true,
-      connection: {
-        select: {
-          status: true,
-          doctor: { select: { userId: true } },
-          patient: { select: { userId: true } },
-        },
-      },
-    },
-  });
+        // 2) Fetch minimal data
+        const chat = await this.prisma.chat.findUnique({
+            where: { id: chatId },
+            select: {
+                id: true,
+                connection: {
+                    select: {
+                        status: true,
+                        doctor: { select: { userId: true } },
+                        patient: { select: { userId: true } },
+                    },
+                },
+            },
+        });
 
-  if (!chat) throw new NotFoundException('Chat not found');
+        if (!chat) throw new NotFoundException('Chat not found');
 
-  // 3) Cache
-  await this.redis.set(cacheKey, chat, 300);
+        // 3) Cache
+        await this.redis.set(cacheKey, chat, 300);
 
-  return chat;
-}
-
-
-
-
+        return chat;
+    }
 
     private async getProfile(userId: string, role: UserRole) {
         return role === UserRole.DOCTOR
@@ -267,7 +263,13 @@ export class ChatService {
     private shortenPreview(text: string) {
         return text.length > 200 ? text.slice(0, 200) : text;
     }
-    public hasAccess(chat: any, userId: string) {
+    canAccessChat(chatHeader: any, userId: string) {
+        return (
+            chatHeader.doctor.userId === userId ||
+            chatHeader.patient.userId === userId
+        );
+    }
+    hasAccess(chat: any, userId: string) {
         return (
             chat.connection.doctor.user.id === userId ||
             chat.connection.patient.user.id === userId

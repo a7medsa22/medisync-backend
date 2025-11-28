@@ -61,70 +61,202 @@ export class MessageService {
         return message;
     }
 
-     async getMessages(chatId: string, userId: string, query: GetMessagesDto) {
-    // Verify access
-    const chat =await this.chatService.getChatHeader(chatId);
+    async getMessages(chatId: string, userId: string, query: GetMessagesDto) {
+        // Verify access
+        const chat = await this.chatService.getChatHeader(chatId);
 
-    if (!chat) {
-      throw new NotFoundException('Chat not found');
+        if (!chat) {
+            throw new NotFoundException('Chat not found');
+        }
+
+        if (!this.chatService.hasAccess(chat, userId)) {
+            throw new ForbiddenException('No access to this chat');
+        }
+
+        // Pagination logic
+
+        const limit = query.limit ?? 20;
+
+        // Build where clause
+        const where: any = {
+            chatId,
+            isDeleted: false,
+        };
+
+        if (query.before) {
+            const beforeMessage = await this.prisma.message.findUnique({
+                where: { id: query.before },
+                select: { createdAt: true },
+            });
+
+            if (beforeMessage) {
+                where.createdAt = { lt: beforeMessage.createdAt };
+            }
+        }
+
+        // Get messages
+        const messages = await this.prisma.message.findMany({
+            where,
+            select: messageSelect,
+            orderBy: { createdAt: 'asc' },
+            take: limit,
+        });
+
+        // 5) Determine if hasMore
+        const lastMessage = messages.at(-1);
+
+        const hasMore =
+            lastMessage ? await this.prisma.message.count({
+                where: {
+                    chatId,
+                    isDeleted: false,
+                    createdAt: { lt: lastMessage.createdAt },
+                },
+            }) > 0 : false;
+
+
+
+        return {
+            messages,
+            cursor: lastMessage?.createdAt || null,
+            hasMore,
+
+        };
     }
 
-    if (!this.chatService.hasAccess(chat, userId)) {
-      throw new ForbiddenException('No access to this chat');
+    /**
+ * Mark message as read
+ */
+    async markAsRead(messageId: string, userId: string) {
+        const message = await this.prisma.message.findUnique({
+            where: { id: messageId },
+            select: {
+                id: true,
+                senderId: true,
+                isRead: true,
+                chatId: true,
+            },
+        });
+
+        if (!message) throw new NotFoundException('Message not found');
+
+        // Cannot mark your own message
+        if (message.senderId === userId) {
+            throw new BadRequestException('Cannot mark your own message as read');
+        }
+
+        // Get chat header (cached)
+        const chatHeader = await this.chatService.getChatHeader(message.chatId);
+
+        if (!this.chatService.canAccessChat(chatHeader, userId)) {
+            throw new ForbiddenException('No access');
+        }
+
+        // Can't mark your own message as read
+        if (message.senderId === userId) {
+            throw new BadRequestException('Cannot mark your own message as read');
+        }
+
+        // Already read
+        if (message.isRead) {
+            return message;
+        }
+
+        // Mark as read
+        return this.prisma.message.update({
+            where: { id: messageId },
+            data: {
+                isRead: true,
+                readAt: new Date(),
+            },
+        });
+
     }
 
-    // Pagination logic
-   
-    const limit = query.limit ?? 20;
-
-    // Build where clause
-    const where: any = {
-      chatId,
-      isDeleted: false,
-    };
-
-    if (query.before) {
-  const beforeMessage = await this.prisma.message.findUnique({
-    where: { id: query.before },
-    select: { createdAt: true },
-  });
-
-  if (beforeMessage) {
-    where.createdAt = { lt: beforeMessage.createdAt };
-  }
-}
-
-    // Get messages
-    const messages = await this.prisma.message.findMany({
-      where,
-     select:messageSelect,
-      orderBy: { createdAt: 'asc' },
-      take: limit,
-    });
-
-  // 5) Determine if hasMore
-      const lastMessage = messages.at(-1);
-
-    const hasMore =
-     lastMessage ? await this.prisma.message.count({
-        where: {
-          chatId,
-          isDeleted: false,
-          createdAt: { lt: lastMessage.createdAt },
-        },
-      }) > 0 :  false;
+    /**
+     * Mark all messages in chat as read
+     */
+    async markAllAsRead(chatId: string, userId: string) {
+        // Verify access
+        const chat = await this.chatService.getChatHeader(chatId);
 
 
-   
-    return {
-      messages,
-     cursor: lastMessage?.createdAt || null,
-       hasMore,
-     
-    };
-  }
+        if (!chat) {
+            throw new NotFoundException('Chat not found');
+        }
 
-  
+        if (!this.chatService.canAccessChat(chat, userId)) {
+            throw new ForbiddenException('No access to this chat');
+        }
+        // Mark all unread messages (not sent by user) as read
+        await this.prisma.message.updateMany({
+            where: {
+                chatId,
+                isRead: false,
+                senderId: { not: userId },
+            },
+            data: {
+                isRead: true,
+                readAt: new Date(),
+            },
+        });
+
+        return { message: 'All messages marked as read' };
+    }
+
+
+    /**
+     * Delete message (soft delete - for sender only)
+     */
+    async deleteMessage(messageId: string, userId: string) {
+        const message = await this.prisma.message.findUnique({
+            where: { id: messageId },
+            select: {
+                id: true,
+                senderId: true,
+                isDeleted: true,
+            },
+        });
+
+        if (!message) throw new NotFoundException('Message not found');
+
+        if (message.senderId !== userId) {
+            throw new ForbiddenException('You can delete only your own messages');
+        }
+
+        if (message.isDeleted) {
+            throw new BadRequestException('Message already deleted');
+        }
+
+        await this.prisma.message.update({
+            where: { id: messageId },
+            data: {
+                isDeleted: true,
+                deletedAt: new Date(),
+                content: "This message was deleted",
+                messageType: 'DELETED',
+            },
+        });
+
+        return { message: 'Message deleted successfully' };
+    }
+
+    /**
+     * Get unread messages count for a chat
+     */
+    async getUnreadCount(chatId: string, userId: string) {
+        return this.prisma.message.count({
+            where: {
+                chatId,
+                isRead: false,
+                senderId: { not: userId },
+                isDeleted: false,
+            },
+        });
+
+    }
+
+
 
 
 

@@ -34,3 +34,8 @@ export const chatDetailsSelect = {
     },
   },
 } as const;
+
+export const chatDetailsSelectWithStatus = {
+  ...chatDetailsSelect,
+  connection: { select: { status: true } }
+}as const;

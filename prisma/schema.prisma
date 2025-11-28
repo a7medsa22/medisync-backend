@@ -423,8 +423,8 @@ model Message {
   readAt    DateTime?
 
   // additional sender info for quick access
-  senderName   String
-  senderRole   String
+  senderName   String?
+  senderRole   String?
   senderAvatar String?
 
   isDeleted    Boolean    @default(false)

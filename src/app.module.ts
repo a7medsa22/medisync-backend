@@ -7,13 +7,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { SpecializationsModule } from './specializations/specializations.module';
-import { DoctorsModule } from './doctors/doctors.module';
 import { RequestsModule } from './requests/requests.module';
 import { PrescriptionsModule } from './prescriptions/prescriptions.module';
 import { QrModule } from './qr/qr.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ChatModule } from './chat/chat.module';
-import { MessageService } from './message/message.service';
+import { UserCacheService } from './common/cache/user-cache.service';
 
 
 @Module({
@@ -53,7 +52,6 @@ import { MessageService } from './message/message.service';
     UsersModule,
     EmailModule,
     SpecializationsModule,
-    DoctorsModule,
     RequestsModule,
     PrescriptionsModule,
     QrModule,
@@ -70,7 +68,7 @@ import { MessageService } from './message/message.service';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    MessageService,
+    UserCacheService,
   ],
 })
 export class AppModule {}

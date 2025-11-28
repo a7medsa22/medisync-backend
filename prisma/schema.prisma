@@ -422,11 +422,16 @@ model Message {
   isRead    Boolean    @default(false)
   readAt    DateTime?
 
+  // additional sender info for quick access
+  senderName   String
+  senderRole   String
+  senderAvatar String?
+
   isDeleted    Boolean    @default(false)
   deletedAt    DateTime?
 
 
-  createdAt    DateTime @default(now())
+  createdAt    DateTime @default(now()) 
   updatedAt    DateTime @updatedAt
 
 //Relations

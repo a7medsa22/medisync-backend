@@ -235,7 +235,7 @@ export class ChatService {
     private shortenPreview(text: string) {
         return text.length > 200 ? text.slice(0, 200) : text;
     }
-    private hasAccess(chat: any, userId: string) {
+    public hasAccess(chat: any, userId: string) {
         return (
             chat.connection.doctor.user.id === userId ||
             chat.connection.patient.user.id === userId

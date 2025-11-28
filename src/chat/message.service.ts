@@ -3,6 +3,8 @@ import { chatDetailsSelect, chatDetailsSelectWithStatus, connectionSelect } from
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChatService } from './chat.service';
 import { UserCacheService } from 'src/common/cache/user-cache.service';
+import { GetMessagesDto } from './dto';
+import { messageSelect } from 'src/common/selects/message.select';
 
 @Injectable()
 export class MessageService {
@@ -59,7 +61,72 @@ export class MessageService {
         return message;
     }
 
-        
+     async getMessages(chatId: string, userId: string, query: GetMessagesDto) {
+    // Verify access
+    const chat =await this.chatService.getChatHeader(chatId);
+
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    if (!this.chatService.hasAccess(chat, userId)) {
+      throw new ForbiddenException('No access to this chat');
+    }
+
+    // Pagination logic
+   
+    const limit = query.limit ?? 20;
+
+    // Build where clause
+    const where: any = {
+      chatId,
+      isDeleted: false,
+    };
+
+    if (query.before) {
+  const beforeMessage = await this.prisma.message.findUnique({
+    where: { id: query.before },
+    select: { createdAt: true },
+  });
+
+  if (beforeMessage) {
+    where.createdAt = { lt: beforeMessage.createdAt };
+  }
+}
+
+    // Get messages
+    const messages = await this.prisma.message.findMany({
+      where,
+     select:messageSelect,
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
+
+  // 5) Determine if hasMore
+      const lastMessage = messages.at(-1);
+
+    const hasMore =
+     lastMessage ? await this.prisma.message.count({
+        where: {
+          chatId,
+          isDeleted: false,
+          createdAt: { lt: lastMessage.createdAt },
+        },
+      }) > 0 :  false;
+
+
+   
+    return {
+      messages,
+     cursor: lastMessage?.createdAt || null,
+       hasMore,
+     
+    };
+  }
+
+  
+
+
 
 
 

@@ -224,6 +224,38 @@ export class ChatService {
         });
     }
 
+    // Fetch minimal chat header info with caching
+    async getChatHeader(chatId: string) {
+  const cacheKey = `chat:header:${chatId}`;
+
+  // 1) Try cache
+  const cached = await this.redis.get(cacheKey);
+  if (cached) return cached;
+
+  // 2) Fetch minimal data
+  const chat = await this.prisma.chat.findUnique({
+    where: { id: chatId },
+    select: {
+      id: true,
+      connection: {
+        select: {
+          status: true,
+          doctor: { select: { userId: true } },
+          patient: { select: { userId: true } },
+        },
+      },
+    },
+  });
+
+  if (!chat) throw new NotFoundException('Chat not found');
+
+  // 3) Cache
+  await this.redis.set(cacheKey, chat, 300);
+
+  return chat;
+}
+
+
 
 
 

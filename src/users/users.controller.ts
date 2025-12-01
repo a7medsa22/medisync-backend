@@ -101,7 +101,7 @@ export class UsersController {
       }
     }
   })
-  async getProfile(@CurrentUser('id') userId: string) {
+  async getProfile(@CurrentUser('sub') userId: string) {
     return this.usersService.getProfile(userId);
   }
 
@@ -114,7 +114,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async updateProfile(
-    @CurrentUser('id') userId: string,
+    @CurrentUser('sub') userId: string,
     @Body() body: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(userId, body);
@@ -272,7 +272,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   deactivateUser(
     @Param('id', ParseUUIDPipe) userId: string,
-    @CurrentUser('id') currentUserId: string,
+    @CurrentUser('sub') currentUserId: string,
   ) {
     return this.usersService.deactivateUser(userId, currentUserId);
   }

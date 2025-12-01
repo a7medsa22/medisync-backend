@@ -10,6 +10,7 @@ import { ActiveQrItemDto } from './dto/active-qr-list.dto';
 import {Cron,CronExpression} from '@nestjs/schedule'
 import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { AuthUser } from 'src/auth/interfaces/request-with-user.interface';
 
 
 @Injectable()
@@ -33,7 +34,7 @@ private userIncludeNotification ={
     },
   },
 }
-    async generateConnectionQrForDoctor(user: JwtPayload, dto: GenerateQrDto) {
+    async generateConnectionQrForDoctor(user: AuthUser, dto: GenerateQrDto) {
   if (!user.doctorId) {
     throw new BadRequestException('Doctor profile not found');
   }
@@ -101,7 +102,7 @@ private userIncludeNotification ={
   /**
    * Patient scans QR and creates instant connection
    */
-  async scanAndConnectForPatient(user: JwtPayload, dto: ScanQrAndValidateDto) {
+  async scanAndConnectForPatient(user: AuthUser, dto: ScanQrAndValidateDto) {
   if (!user.patientId) {
     throw new BadRequestException('Patient profile not found');
   }

@@ -10,6 +10,8 @@ import { RespondToRequestDto } from './dto/respond-to-request.dto';
 import { RejectRequestDto } from './dto/reject-request.dto';
 import { SetAvailabilityDto } from './dto/set-availability.dto';
 import { ApiAuth } from 'src/common/decorators/api-auth.decorator';
+import { AuthUser } from 'src/auth/interfaces/request-with-user.interface';
+import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 
 @ApiTags('Requests & Connections')
 @ApiAuth()
@@ -27,10 +29,10 @@ export class RequestsController {
   @ApiResponse({ status: 409, description: 'Already connected or pending request exists' })
   @ApiResponse({ status: 404, description: 'Doctor not found' })
   async createFollowUpRequest(
-    @CurrentUser() user: any,
+    @CurrentUser('sub') userId: string,
     @Body() body: CreateFollowUpRequestDto,
   ) {
-    return this.requestsService.createFollowUpRequest(user.id, body);
+    return this.requestsService.createFollowUpRequest(userId, body);
   }
 
   @Get('pending')
@@ -41,10 +43,10 @@ export class RequestsController {
   })
   @ApiResponse({ status: 200, description: 'Pending requests retrieved successfully' })
   async getPendingRequests(
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId: string,
     @Query() query: RequestQueryDto,
   ) {
-    return this.requestsService.getPendingRequests(doctorProfile.id, query);
+    return this.requestsService.getPendingRequests(doctorId, query);
   }
 
   @Get('all')
@@ -55,10 +57,11 @@ export class RequestsController {
   }) 
   @ApiResponse({ status: 200, description: 'Requests retrieved successfully' })
   async getAllRequests(
-    @CurrentUser('profile') doctorProfile: any,
     @Query() query: RequestQueryDto,
+        @CurrentUser('doctorId') doctorId:string ,
+
   ) {
-    return this.requestsService.getAllRequests(doctorProfile.id, query);
+    return this.requestsService.getAllRequests(doctorId, query);
   }
 
   @Post(':id/accept')
@@ -73,10 +76,10 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Follow-up request ID', type: String })
   async acceptRequest(
     @Param('id', ParseUUIDPipe) requestId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId:string ,
     @Body() body: RespondToRequestDto,
   ) {
-    return this.requestsService.acceptRequest(requestId, doctorProfile.id, body);
+    return this.requestsService.acceptRequest(requestId, doctorId, body);
   }
 
   @Post(':id/reject')
@@ -90,10 +93,10 @@ export class RequestsController {
   @ApiResponse({ status: 400, description: 'Request already responded' })
   async rejectRequest(
     @Param('id', ParseUUIDPipe) requestId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId:string ,
     @Body() body: RejectRequestDto,
   ) {
-    return this.requestsService.rejectRequest(requestId, doctorProfile.id, body.reason);
+    return this.requestsService.rejectRequest(requestId, doctorId, body.reason);
   }
 
   
@@ -129,7 +132,7 @@ export class RequestsController {
   @ApiResponse({ status: 403, description: 'Access denied' })
   async getConnection(
     @Param('id', ParseUUIDPipe) connectionId: string,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('sub') userId: string,
   ) {
     return this.requestsService.getConnection(connectionId, userId);
   }

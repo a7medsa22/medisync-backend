@@ -30,11 +30,11 @@ export class PrescriptionsController {
   @ApiResponse({ status: 400, description: 'Connection not active or invalid data' })
   async createPrescription(
     @Param('connectionId', ParseUUIDPipe) connectionId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId: string,
     @Body() body: CreatePrescriptionDto,
   ) {
     return this.prescriptionsService.createPrescription(
-      doctorProfile.id,
+      doctorId,
       connectionId,
       body,
     );
@@ -55,8 +55,8 @@ export class PrescriptionsController {
   @ApiResponse({ status: 403, description: 'Access denied' })
   async getConnectionPrescriptions(
     @Param('connectionId', ParseUUIDPipe) connectionId: string,
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') userRole: 'DOCTOR' | 'PATIENT',
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('role') userRole:UserRole,
   ) {
     return this.prescriptionsService.getConnectionPrescriptions(
       connectionId,
@@ -127,10 +127,10 @@ export class PrescriptionsController {
     },
   })
   async getMyPrescriptions(
-    @CurrentUser('profile') patientProfile: any,
+    @CurrentUser('patientId') patientId: string,
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
   ) {
-    return this.prescriptionsService.getMyPrescriptions(patientProfile.id, isActive);
+    return this.prescriptionsService.getMyPrescriptions(patientId, isActive);
   }
 
   @Get('patients/:patientId')
@@ -143,10 +143,10 @@ export class PrescriptionsController {
   @ApiResponse({ status: 404, description: 'No connection with this patient' })
   async getPatientPrescriptions(
     @Param('patientId', ParseUUIDPipe) patientId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId: string,
   ) {
     return this.prescriptionsService.getPatientPrescriptions(
-      doctorProfile.id,
+      doctorId,
       patientId,
     );
   }
@@ -161,8 +161,8 @@ export class PrescriptionsController {
   @ApiResponse({ status: 403, description: 'Access denied' })
   async getPrescription(
     @Param('id', ParseUUIDPipe) prescriptionId: string,
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') userRole: 'DOCTOR' | 'PATIENT',
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('role') userRole: UserRole,
   ) {
     return this.prescriptionsService.getPrescription(prescriptionId, userId, userRole);
   }
@@ -182,12 +182,12 @@ export class PrescriptionsController {
   @ApiResponse({ status: 403, description: 'Not your prescription' })
   async updatePrescription(
     @Param('id', ParseUUIDPipe) prescriptionId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId: string,
     @Body() body: UpdatePrescriptionDto,
   ) {
     return this.prescriptionsService.updatePrescription(
       prescriptionId,
-      doctorProfile.id,
+      doctorId,
       body,
     );
   }
@@ -203,11 +203,11 @@ export class PrescriptionsController {
   @ApiResponse({ status: 403, description: 'Not your prescription' })
   async deactivatePrescription(
     @Param('id', ParseUUIDPipe) prescriptionId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('doctorId') doctorId:string,
   ) {
     return this.prescriptionsService.deactivatePrescription(
       prescriptionId,
-      doctorProfile.id,
+      doctorId,
     );
   }
   

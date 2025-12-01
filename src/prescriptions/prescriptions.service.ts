@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
 import { UpdatePrescriptionDto } from './dto/update-prescription.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class PrescriptionsService {
@@ -56,7 +57,7 @@ export class PrescriptionsService {
   }
   
     // Get all prescriptions for a connection
-    async getConnectionPrescriptions(connectionId: string,userId:string,userRole:'DOCTOR'|'PATIENT') {
+    async getConnectionPrescriptions(connectionId: string,userId:string,userRole:UserRole) {
 
     const connection = await this.prisma.doctorPatientConnection.findUniqueOrThrow({
       where:{id:connectionId},
@@ -135,7 +136,7 @@ export class PrescriptionsService {
   // ===============================================
   // GET SINGLE PRESCRIPTION
   // ===============================================
-  async getPrescription( prescriptionId: string,userId: string,userRole: 'DOCTOR' | 'PATIENT') {
+  async getPrescription( prescriptionId: string,userId: string,userRole: UserRole) {
 
    const prescription = await this.prisma.prescription.findUnique({
     where:{id:prescriptionId},

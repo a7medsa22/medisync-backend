@@ -93,6 +93,29 @@ export class ChatController {
   }
 
 
+   @Put(':chatId/read-all')
+  @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  async markAllAsRead(
+    @Param('chatId') chatId: string,
+    @CurrentUser('sub') userId: string,
+  ) {
+    await this.messageService.markAllAsRead(chatId, userId);
+    await this.chatService.resetUnreadCount(chatId, userId);
+
+    return { message: 'All messages marked as read' };
+  }
+
+   @Delete('messages/:messageId')
+  @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  async deleteMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.messageService.deleteMessage(messageId, userId);
+  }
+
+  
+
 
 
 

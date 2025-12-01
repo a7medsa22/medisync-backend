@@ -4,7 +4,6 @@ import { MessageService } from './message.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import type { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UserRole } from '@prisma/client';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetMessagesDto, SendMessageDto } from './dto';
@@ -17,15 +16,27 @@ export class ChatController {
 
   @Get()
   @Roles(UserRole.DOCTOR,UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Get user conversations',
+    description: 'Retrieve all conversations for a user, including both active and inactive chats',
+  })
   @ApiResponse({ status: 200, description: 'Conversations retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  
+  @ApiResponse({ status: 403, description: 'Forbidden' }) 
   async getConversations(@CurrentUser() user: JwtPayload) {
     return this.chatService.getUserChats(user.sub, user.role);
   }
 
    @Post('connection/:connectionId')
   @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Get or create a chat',
+    description: 'Retrieve an existing chat or create a new one if it does not exist',
+  })
+  @ApiResponse({ status: 200, description: 'Chat retrieved or created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Connection not found' })
   async getOrCreateChat(
     @Param('connectionId') connectionId: string,
     @CurrentUser('sub') userId: string,
@@ -43,6 +54,14 @@ export class ChatController {
 
    @Get(':chatId')
   @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Get chat details',
+    description: 'Retrieve details of a specified chat',
+  })
+  @ApiResponse({ status: 200, description: 'Chat details retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Chat not found' })
   async getChatDetails(
     @Param('chatId') chatId: string,
     @CurrentUser('sub') userId: string,
@@ -52,6 +71,14 @@ export class ChatController {
 
   @Get(':chatId/messages')
   @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Get messages in a chat',
+    description: 'Retrieve messages in a specified chat with pagination',
+  })
+  @ApiResponse({ status: 200, description: 'Messages retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Chat not found' })
   async getMessages(
     @Param('chatId') chatId: string,
     @Query() query: GetMessagesDto,
@@ -62,6 +89,23 @@ export class ChatController {
 
    @Post('messages')
   @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Send a message',
+    description: 'Send a message in a specified chat',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Message sent successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Message sent successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Chat not found' })
   async sendMessage(
     @Body() dto: SendMessageDto,
     @CurrentUser('sub') userId: string,
@@ -85,6 +129,23 @@ export class ChatController {
 
    @Put('messages/:messageId/read')
   @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Mark a message as read',
+    description: 'Mark a specific message as read for the current user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Message marked as read',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Message marked as read' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Message not found' })
   async markMessageAsRead(
     @Param('messageId') messageId: string,
     @CurrentUser('sub') userId: string,
@@ -93,8 +154,25 @@ export class ChatController {
   }
 
 
-   @Put(':chatId/read-all')
+  @Put(':chatId/read-all')
   @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'Mark all messages in a chat as read',
+    description: 'Mark all messages in the specified chat as read for the current user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All messages marked as read',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'All messages marked as read' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Chat not found' })
   async markAllAsRead(
     @Param('chatId') chatId: string,
     @CurrentUser('sub') userId: string,

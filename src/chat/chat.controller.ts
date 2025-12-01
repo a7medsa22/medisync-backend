@@ -60,7 +60,38 @@ export class ChatController {
     return this.messageService.getMessages(chatId, userId, query);
   }
 
-  
+   @Post('messages')
+  @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  async sendMessage(
+    @Body() dto: SendMessageDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    const message = await this.messageService.sendMessage(
+      dto.chatId,
+      userId,
+      dto.content,
+      dto.messageType || 'TEXT',
+    );
+     // Update chat (lastMessage + timestamp)
+    const chat = await this.chatService.getChatDetails(dto.chatId, userId);
+    await this.chatService.updateConnectionLastMessage(
+      chat.connectionId,
+      message.createdAt,
+      dto.content,
+    );
+
+    return message;
+  }
+
+   @Put('messages/:messageId/read')
+  @Roles(UserRole.DOCTOR, UserRole.PATIENT)
+  async markMessageAsRead(
+    @Param('messageId') messageId: string,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.messageService.markAsRead(messageId, userId);
+  }
+
 
 
 

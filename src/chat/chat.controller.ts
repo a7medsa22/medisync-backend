@@ -1,34 +1,21 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { CreateChatDto } from './dto/get-messages.dto';
-import { UpdateChatDto } from './dto/mark-as-read.dto';
+import { MessageService } from './message.service';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import type { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
-
-  @Post()
-  create(@Body() createChatDto: CreateChatDto) {
-    return this.chatService.create(createChatDto);
-  }
+  constructor(private readonly chatService: ChatService
+       ,private readonly messageService:MessageService, 
+  ) {}
 
   @Get()
-  findAll() {
-    return this.chatService.findAll();
+  @RolesGuard()
+  async getConversations(@CurrentUser() user: JwtPayload) {
+    return this.chatService.getUserChats(user.sub, user.role);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chatService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
-    return this.chatService.update(+id, updateChatDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chatService.remove(+id);
-  }
 }

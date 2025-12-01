@@ -1,12 +1,10 @@
 import { UserRole, UserStatus } from "@prisma/client";
 import { Request } from "express";
+import { JwtPayload } from "./jwt-payload.interface";
 
+export interface AuthUser extends JwtPayload {
+  profile?: any; 
+}
 export interface RequestWithUser extends Request{
-    user:{
-        id:string,
-        email:string,
-        role:UserRole,
-        status:UserStatus,
-        profile:any
-    }
+    user:AuthUser;
 }

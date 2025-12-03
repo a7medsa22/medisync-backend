@@ -134,6 +134,7 @@ export class MessageService {
                 id: true,
                 senderId: true,
                 isRead: true,
+                readAt:true,
                 chatId: true,
             },
         });

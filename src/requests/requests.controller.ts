@@ -112,13 +112,13 @@ export class RequestsController {
   @ApiResponse({ status: 200, description: 'Connections retrieved successfully' })
   async getConnections(
     @CurrentUser('role') role: UserRole,
-    @CurrentUser('profile') profile: any,
+    @CurrentUser('sub') userId: string,
     @Query() query:RequestQueryDto,
   ) {
     if (role === UserRole.DOCTOR) {
-      return this.requestsService.getConnectedPatients(profile.id, query);
+      return this.requestsService.getConnectedPatients(userId, query);
     } else {
-      return this.requestsService.getConnectedDoctors(profile.id);
+      return this.requestsService.getConnectedDoctors(userId);
     }
   }
 
@@ -148,10 +148,10 @@ export class RequestsController {
   @ApiResponse({ status: 403, description: 'Only doctor can update availability' })
   async updateAvailability(
     @Param('id', ParseUUIDPipe) connectionId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('sub') doctorId: string,
     @Body() body: SetAvailabilityDto,
   ) {
-    return this.requestsService.updateAvailability(connectionId, doctorProfile.id, body);
+    return this.requestsService.updateAvailability(connectionId, doctorId, body);
   }
 
   @Put('connections/:id/deactivate')
@@ -165,9 +165,9 @@ export class RequestsController {
   @ApiResponse({ status: 403, description: 'Only doctor can deactivate connection' })
   async deactivateConnection(
     @Param('id', ParseUUIDPipe) connectionId: string,
-    @CurrentUser('profile') doctorProfile: any,
+    @CurrentUser('sub') doctorId: string,
   ) {
-    return this.requestsService.deactivateConnection(connectionId, doctorProfile.id);
+    return this.requestsService.deactivateConnection(connectionId, doctorId);
   }
 
 }

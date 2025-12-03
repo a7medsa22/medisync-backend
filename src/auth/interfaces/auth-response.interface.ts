@@ -1,12 +1,10 @@
-import { UserRole, UserStatus } from "@prisma/client";
-import { AuthUser } from "./request-with-user.interface";
+import { AuthUserforRes } from "./request-with-user.interface";
 
 
 
 export interface AuthResponse{
-    user: AuthUser;
+    user: AuthUserforRes;
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
-
 }

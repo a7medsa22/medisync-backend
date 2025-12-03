@@ -3,15 +3,16 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { ConnectionStatus, PrismaClient, UserRole } from '@prisma/client';
+import { ConnectionStatus, UserRole } from '@prisma/client';
 import { chatDetailsSelect, connectionSelect, lastMessageSelect } from 'src/common/selects/chat.select';
 import { ChatDetailsResponseDto } from './dto';
 import { RedisService } from 'src/common/cache/redis.service';
 import { ChatMapper } from 'src/common/mappers/chat.mapper';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ChatService {
-    constructor(private readonly prisma: PrismaClient, private readonly redis: RedisService) { }
+    constructor(private readonly prisma: PrismaService, private readonly redis: RedisService) { }
 
     async getOrCreateChat(connectionId: string) {
         const connection = await this.prisma.doctorPatientConnection.findUnique({
@@ -49,7 +50,7 @@ export class ChatService {
                 return newChat;
             });
         }
-
+ 
         return {
             chatId: chat.id,
             connectionId: connection.id,

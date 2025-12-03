@@ -84,15 +84,16 @@ export class LoginProvider {
 
     return {
       user: {
-        id: user.id,
+        sub: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         status: user.status,
-        profile: user.role === UserRole.PATIENT ? user.patient : user.doctor,
-        },
-      accessToken,  
+        doctorId: doctorId || null,
+        patientId: patientId || null,
+      },
+      accessToken,
       refreshToken,
       expiresIn: Number(this.config.get('JWT_EXPIRES_IN')),
     };
@@ -111,7 +112,7 @@ export class LoginProvider {
   case UserStatus.PENDING_EMAIL_VERIFICATION:
     throw new UnauthorizedException('Please verify your email before logging in.');
 
-  case UserStatus.EMAIL_VERIFIED:
+  case UserStatus.EMAIL_VERIFIED:  
     throw new UnauthorizedException('Please complete your profile before logging in.');
 
   case UserStatus.PENDING_ADMIN_APPROVAL:

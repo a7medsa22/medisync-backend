@@ -1,77 +1,56 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { MessageService } from './message.service';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { RedisService } from 'src/common/cache/redis.service';
 import { SendMessageDto } from './dto';
+import { WsJwtGuard } from 'src/auth/guards/ws-Jwt.guard';
+import { ActiveUsersService } from './active-users.service';
+import { ChatEventsService } from './chat-events.service';
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
   namespace: '/chat',
 })
 
 @Injectable()
+@UseGuards(WsJwtGuard)
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
 
-  // userId -> Set<socketId>
-  private activeUsers = new Map<string, string>();
-  // userId -> Set<socketId> (typing)
-  private typingUsers = new Map<string, Set<string>>();
-
-  // Simple per-socket rate limiter: socketId -> { lastSentAt, countWindow }
-  private messageRate = new Map<string, { lastSentAt: number; count: number }>();
+  
 
 
 
   constructor(
     private readonly chatService: ChatService,
     private readonly messageService: MessageService,
-    private readonly config: ConfigService,
-    private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
     @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
+    private readonly activeUsersService: ActiveUsersService,
+    private readonly chatEvents: ChatEventsService,
 
   ) { }
   afterInit() {
-    console.log('Chat Gateway Initialized');
+    this.logger.log('Chat Gateway Initialized');
   }
 
   /**
   * Handle connection
   */
   async handleConnection(client: Socket) {
-    try {
-      // Extract token
-      const token =
-        client.handshake.auth?.token ||
-        client.handshake.headers?.authorization?.split(' ')[1];
-
-      if (!token) return client.disconnect();
-      // Verify token
-      const payload = this.jwtService.verify(token, {
-        secret: this.config.get('JWT_SECRET'),
-      });
-      // Store user info
-      client.data.userId = payload.sub;
-      client.data.role = payload.role;
-
-      await this.setUserOnline(payload.sub, client.id);
-
-      this.logger.log(`User ${payload.sub} connected`);
-      // Emit online status
-      client.broadcast.emit('user_online', { userId: payload.sub });
-
-    } catch (err) {
-      this.logger.error('Invalid WS connection', err);
+    const userId = client.data.userId;
+    if (!userId) {
       client.disconnect();
+      return;
     }
+    await this.activeUsersService.setOnline(userId, client.id);
+    this.logger.log(`User ${userId} connected`);
+    client.broadcast.emit('user_online', { userId });
   }
 
   // Handle disconnection
@@ -79,7 +58,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const userId = client.data.userId;
     if (!userId) return;
 
-    await this.deleteUserOnline(userId);
+    await this.activeUsersService.unsetOnline(userId);
 
     await this.redisService.del(`typing:*:${userId}`);
 
@@ -92,7 +71,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('join_chat')
   async joinChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { chatId: string },
+    @MessageBody(new ValidationPipe({ transform: true, whitelist: true })) data: { chatId: string },
   ) {
     try {
       const userId = client.data.userId;
@@ -103,7 +82,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         return client.emit('error', { message: 'Access Denied' });
       }
 
-      client.join(this.getRoom(chatId));
+      this.joinChatRoom(client, chatId);
 
       // Mark all messages as read
       await this.messageService.markAllAsRead(chatId, userId);
@@ -122,7 +101,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('leave_chat')
   leaveChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { chatId: string },
+    @MessageBody(new ValidationPipe({ transform: true, whitelist: true })) data: { chatId: string },
   ) {
     client.leave(this.getRoom(data.chatId));
     this.stopTyping(client, data);
@@ -134,91 +113,28 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: SendMessageDto,
+    @MessageBody(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) data: SendMessageDto,
   ) {
-  
+    try {
       const userId = client.data.userId;
       const { chatId, content } = data;
       const rateKey = `msg_rate:${userId}`;
-      const count = await this.redisService.incr(rateKey);
-
-      // Validate
-      if (count > 3) {
-      return client.emit('error', {
-        message: 'Too many messages — slow down',
-      });
-    }
-      if (!content || content.trim().length === 0) {
-        client.emit('error', { message: 'Message content cannot be empty' });
+      const current = await this.redisService.get<number>(rateKey);
+      const next = current ? current + 1 : 1;
+      await this.redisService.set(rateKey, next, 1);
+      if (next > 3) {
+        client.emit('error', { message: 'Too many messages — slow down' });
         return;
       }
 
-      if (content.length > 5000) {
-        client.emit('error', { message: 'Message too long (max 5000 characters)' });
-        return;
-      }
+      const message = await this.chatEvents.sendMessage(chatId, userId, content);
 
-      // Send message
-      const message = await this.messageService.sendMessage(
-        chatId,
-        userId,
-        content.trim(),
-        'TEXT',
-      );
-
-      // Get chat details for recipient
-      const chat = await this.chatService.getChatDetails(chatId, userId);
-
-       const recipientUserId =
-        chat.doctor.userId === userId
-          ? chat.patient.userId
-          : chat.doctor.userId;
-
-          
-      // Update connection cache
-      await this.chatService.updateConnectionLastMessage(
-        chat.connectionId,
-        message.createdAt,
-        content,
-      );
-
-      // Determine recipient
-    
-
-      // Increment unread count for recipient
-      const recipientRole =
-        chat.connection.doctor.userId === userId ? 'PATIENT' : 'DOCTOR';
-      await this.chatService.incrementUnreadCount(chat.connectionId, recipientRole);
-
-      // Emit to chat room
-      this.server.to(`chat:${chatId}`).emit('new_message', message);
-
-      // Confirm to sender
+      this.server.to(this.getRoom(chatId)).emit('new_message', message);
       client.emit('message_sent', { message });
-
-      // Stop typing indicator
-      this.handleStopTyping(client, { chatId });
-
-      // Send notification if recipient is offline
-      const isRecipientOnline = this.activeUsers.has(recipientUserId);
-
-      if (!isRecipientOnline) {
-        await this.notificationsService.createNotification(
-          recipientUserId,
-          'NEW_CHAT_MESSAGE',
-          `New message from ${message.sender.firstName} ${message.sender.lastName}`,
-          content.substring(0, 100),
-          {
-            chatId,
-            messageId: message.id,
-            senderId: userId,
-          },
-        );
-      }
-
-    
-      console.error('Error sending message:', error);
-      client.emit('error', { message: error.message });
+      await this.stopTyping(client, { chatId });
+    } catch (error: any) {
+      client.emit('error', { message: error.message || 'Failed to send message' });
+    }
   }
 
   /**
@@ -227,7 +143,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('mark_as_read')
   async handleMarkAsRead(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { messageId: string },
+    @MessageBody(new ValidationPipe({ transform: true, whitelist: true })) data: { messageId: string },
   ) {
     try {
       const userId = client.data.userId;
@@ -236,7 +152,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const message = await this.messageService.markAsRead(messageId, userId);
 
       // Emit to chat room
-      this.server.to(`chat:${message.chatId}`).emit('message_read', {
+      this.server.to(this.getRoom(message.chatId)).emit('message_read', {
         messageId,
         readAt: message.readAt,
         readBy: userId,
@@ -253,7 +169,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('typing_start')
   async startTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { chatId: string },
+    @MessageBody(new ValidationPipe({ transform: true, whitelist: true })) data: { chatId: string },
   ) {
     const userId = client.data.userId;
     const { chatId } = data;
@@ -275,7 +191,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('typing_stop')
  async stopTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { chatId: string },
+    @MessageBody(new ValidationPipe({ transform: true, whitelist: true })) data: { chatId: string },
   ) {
     const userId = client.data.userId;
     const { chatId } = data;
@@ -297,39 +213,33 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody() data: { userId: string },
   ) {
     const { userId } = data;
-    const isOnline = this.isOnline(userId);
-
-    client.emit('user_status', { userId, isOnline });
+    this.isOnline(userId).then((isOnline) => {
+      client.emit('user_status', { userId, isOnline });
+    });
   }
 
   /**
    * Helper: Check if user is online
    */
   isUserOnline(userId: string): boolean {
-    return this.activeUsers.has(userId);
+    return false;
   }
 
   /**
    * Helper: Get online users count
    */
-  getOnlineUsersCount(): number {
-    return this.activeUsers.size;
-  }
+  
   /**
    * Helper: Get chat room name
    */
   private getRoom(chatId: string): string {
     return `chat:${chatId}`;
   }
-  private async setUserOnline(userId: string, socketId: string) {
-    await this.redisService.set(`user:${userId}:online`, socketId, 60 * 5);
-  }
-
-  private async deleteUserOnline(userId: string) {
-    await this.redisService.del(`user:${userId}:online`);
+  private joinChatRoom(client: Socket, chatId: string) {
+    client.join(this.getRoom(chatId));
   }
   private async isOnline(userId: string): Promise<boolean> {
-    return await this.redisService.get(`user:${userId}:online`) !== null;
+    return this.activeUsersService.isOnline(userId);
   }
   private throttleTypingKey(userId: string, chatId: string) {
     return `typing:${userId}:${chatId}`;

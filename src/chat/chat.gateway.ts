@@ -42,77 +42,52 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     console.log('Chat Gateway Initialized');
   }
 
-
-
   /**
     * Handle connection
     */
   async handleConnection(client: Socket) {
-    const userId = client.data?.userId;
     try {
       // Extract token
       const token =
         client.handshake.auth?.token ||
         client.handshake.headers?.authorization?.split(' ')[1];
 
-      if (!token) {
-        client.disconnect();
-        return;
-      }
-
+      if (!token) return client.disconnect();
       // Verify token
       const payload = this.jwtService.verify(token, {
         secret: this.config.get('JWT_SECRET'),
       });
-
-      if (!payload?.sub) {
-        client.disconnect();
-        return;
-      }
-
       // Store user info
-      const userId = payload.sub;
-      client.data.userId = userId;
+      client.data.userId = payload.sub;
       client.data.role = payload.role;
-      this.activeUsers.set(userId, client.id);
 
-      console.log(`✅ User ${userId} connected to chat`);
+      await this.setUserOnline(payload.sub,client.id);
 
+      this.logger.log(`User ${payload.sub} connected`);
       // Emit online status
-      client.broadcast.emit('user_online', { userId });
+      client.broadcast.emit('user_online', { userId: payload.sub });
 
-    } catch (error) {
-      console.error('❌ Chat WebSocket authentication failed:', error.message);
+    } catch (err) {
+      this.logger.error('Invalid WS connection', err);
       client.disconnect();
     }
   }
 
-  /**
-   * Handle disconnection
-   */
-  handleDisconnect(client: Socket) {
+   // Handle disconnection
+ async handleDisconnect(client: Socket) {
     const userId = client.data.userId;
-    if (userId) {
-      this.activeUsers.delete(userId);
+    if (!userId) return;
 
-      // Clear typing indicators
-      this.typingUsers.forEach((users, chatId) => {
-        if (users.has(userId)) {
-          users.delete(userId);
-          this.server.to(`chat:${chatId}`).emit('user_stopped_typing', { userId });
-        }
-      });
+    await this.deleteUserOnline(userId);
 
-      console.log(`❌ User ${userId} disconnected from chat`);
+    await this.redisService.del(`typing:*:${userId}`);
 
-      // Emit offline status
-      client.broadcast.emit('user_offline', { userId });
-    }
+    client.broadcast.emit('user_offline', { userId });
+    this.logger.warn(`User ${userId} disconnected`);
+
   }
 
-  /**
-   * Join chat room
-   */
+  // Join chat room
   @SubscribeMessage('join_chat')
   async handleJoinChat(
     @ConnectedSocket() client: Socket,

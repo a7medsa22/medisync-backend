@@ -1,8 +1,4 @@
 import { AuthGuard } from "@nestjs/passport";
-
-import { ConfigService } from "@nestjs/config";
-
-import { ExtractJwt } from "passport-jwt";
 import { ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";

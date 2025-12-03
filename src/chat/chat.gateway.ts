@@ -8,47 +8,47 @@ import { JwtService } from '@nestjs/jwt';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { RedisService } from 'src/common/cache/redis.service';
 @WebSocketGateway({
-   cors: { origin: '*', credentials: true },
+  cors: { origin: '*', credentials: true },
   namespace: '/chat',
 })
 
 @Injectable()
-export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayDisconnect {
-    @WebSocketServer()server:Server;
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer() server: Server;
 
-    private readonly logger = new Logger(ChatGateway.name);
+  private readonly logger = new Logger(ChatGateway.name);
 
-    // userId -> Set<socketId>
- private activeUsers = new Map<string,string>();
-   // userId -> Set<socketId> (typing)
- private typingUsers = new Map<string,Set<string>>();
+  // userId -> Set<socketId>
+  private activeUsers = new Map<string, string>();
+  // userId -> Set<socketId> (typing)
+  private typingUsers = new Map<string, Set<string>>();
 
-   // Simple per-socket rate limiter: socketId -> { lastSentAt, countWindow }
- private messageRate = new Map<string,{lastSentAt:number;count:number}>();
+  // Simple per-socket rate limiter: socketId -> { lastSentAt, countWindow }
+  private messageRate = new Map<string, { lastSentAt: number; count: number }>();
 
 
 
- constructor(
-  private readonly chatService:ChatService,
-  private readonly messageService:MessageService,
-  private readonly config:ConfigService,
-  private readonly jwtService:JwtService,
-  private readonly redisService:RedisService,
-  @Inject(forwardRef(() => NotificationsService))
-  private  notificationsService:NotificationsService,
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly messageService: MessageService,
+    private readonly config: ConfigService,
+    private readonly jwtService: JwtService,
+    private readonly redisService: RedisService,
+    @Inject(forwardRef(() => NotificationsService))
+    private notificationsService: NotificationsService,
 
- ){}
+  ) { }
   afterInit() {
     console.log('Chat Gateway Initialized');
   }
 
 
 
- /**
-   * Handle connection
-   */
+  /**
+    * Handle connection
+    */
   async handleConnection(client: Socket) {
-        const userId = client.data?.userId;
+    const userId = client.data?.userId;
     try {
       // Extract token
       const token =
@@ -94,7 +94,7 @@ export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayD
     const userId = client.data.userId;
     if (userId) {
       this.activeUsers.delete(userId);
-      
+
       // Clear typing indicators
       this.typingUsers.forEach((users, chatId) => {
         if (users.has(userId)) {
@@ -132,7 +132,7 @@ export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayD
 
       // Join room
       client.join(`chat:${chatId}`);
-      
+
       // Mark all messages as read
       await this.messageService.markAllAsRead(chatId, userId);
       await this.chatService.resetUnreadCount(chatId, userId);
@@ -155,10 +155,10 @@ export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayD
   ) {
     const { chatId } = data;
     client.leave(`chat:${chatId}`);
-    
+
     // Stop typing if was typing
     this.handleStopTyping(client, data);
-    
+
     client.emit('left_chat', { chatId });
     console.log(`✅ User ${client.data.userId} left chat ${chatId}`);
   }
@@ -226,7 +226,7 @@ export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayD
 
       // Send notification if recipient is offline
       const isRecipientOnline = this.activeUsers.has(recipientUserId);
-      
+
       if (!isRecipientOnline) {
         await this.notificationsService.createNotification(
           recipientUserId,
@@ -328,7 +328,7 @@ export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayD
   ) {
     const { userId } = data;
     const isOnline = this.activeUsers.has(userId);
-    
+
     client.emit('user_status', { userId, isOnline });
   }
 
@@ -345,17 +345,26 @@ export class ChatGateway implements OnGatewayInit,OnGatewayConnection,OnGatewayD
   getOnlineUsersCount(): number {
     return this.activeUsers.size;
   }
- /**
-  * Helper: Get chat room name
-  */
- private getRoom(chatId: string): string {
+  /**
+   * Helper: Get chat room name
+   */
+  private getRoom(chatId: string): string {
     return `chat:${chatId}`;
   }
-  private async setUserOnline(userId:string,socketId:string){
-    await this.redisService.set(`user:${userId}:online`,socketId,60*5); 
+  private async setUserOnline(userId: string, socketId: string) {
+    await this.redisService.set(`user:${userId}:online`, socketId, 60 * 5);
   }
 
-  
+  private async deleteUserOnline(userId: string) {
+    await this.redisService.del(`user:${userId}:online`);
+  }
+  private async isOnline(userId: string): Promise<boolean> {
+    return await this.redisService.get(`user:${userId}:online`) !== null;
+  }
+  private throttleTypingKey(userId: string, chatId: string) {
+    return `typing:${userId}:${chatId}`;
+  }
+
 
 
 }

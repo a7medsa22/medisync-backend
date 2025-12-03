@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { RedisService } from 'src/common/cache/redis.service';
+import { SendMessageDto } from './dto';
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
   namespace: '/chat',
@@ -43,8 +44,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   /**
-    * Handle connection
-    */
+  * Handle connection
+  */
   async handleConnection(client: Socket) {
     try {
       // Extract token
@@ -133,13 +134,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { chatId: string; content: string },
+    @MessageBody() data: SendMessageDto,
   ) {
-    try {
+  
       const userId = client.data.userId;
       const { chatId, content } = data;
+      const rateKey = `msg_rate:${userId}`;
+      const count = await this.redisService.incr(rateKey);
 
       // Validate
+      if (count > 3) {
+      return client.emit('error', {
+        message: 'Too many messages — slow down',
+      });
+    }
       if (!content || content.trim().length === 0) {
         client.emit('error', { message: 'Message content cannot be empty' });
         return;
@@ -161,6 +169,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Get chat details for recipient
       const chat = await this.chatService.getChatDetails(chatId, userId);
 
+       const recipientUserId =
+        chat.doctor.userId === userId
+          ? chat.patient.userId
+          : chat.doctor.userId;
+
+          
       // Update connection cache
       await this.chatService.updateConnectionLastMessage(
         chat.connectionId,
@@ -169,10 +183,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       );
 
       // Determine recipient
-      const recipientUserId =
-        chat.connection.doctor.userId === userId
-          ? chat.connection.patient.userId
-          : chat.connection.doctor.userId;
+    
 
       // Increment unread count for recipient
       const recipientRole =
@@ -205,10 +216,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         );
       }
 
-    } catch (error) {
+    
       console.error('Error sending message:', error);
       client.emit('error', { message: error.message });
-    }
   }
 
   /**
@@ -287,7 +297,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody() data: { userId: string },
   ) {
     const { userId } = data;
-    const isOnline = this.activeUsers.has(userId);
+    const isOnline = this.isOnline(userId);
 
     client.emit('user_status', { userId, isOnline });
   }

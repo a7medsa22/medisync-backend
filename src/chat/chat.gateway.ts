@@ -61,7 +61,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.data.userId = payload.sub;
       client.data.role = payload.role;
 
-      await this.setUserOnline(payload.sub,client.id);
+      await this.setUserOnline(payload.sub, client.id);
 
       this.logger.log(`User ${payload.sub} connected`);
       // Emit online status
@@ -73,8 +73,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
-   // Handle disconnection
- async handleDisconnect(client: Socket) {
+  // Handle disconnection
+  async handleDisconnect(client: Socket) {
     const userId = client.data.userId;
     if (!userId) return;
 
@@ -89,7 +89,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   // Join chat room
   @SubscribeMessage('join_chat')
-  async handleJoinChat(
+  async joinChat(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string },
   ) {
@@ -98,23 +98,18 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const { chatId } = data;
 
       // Verify access
-      const hasAccess = await this.chatService.verifyUserAccess(chatId, userId);
-
-      if (!hasAccess) {
-        client.emit('error', { message: 'Access denied to this chat' });
-        return;
+      if (!this.chatService.verifyUserAccess(chatId, userId)) {
+        return client.emit('error', { message: 'Access Denied' });
       }
 
-      // Join room
-      client.join(`chat:${chatId}`);
+      client.join(this.getRoom(chatId));
 
       // Mark all messages as read
       await this.messageService.markAllAsRead(chatId, userId);
       await this.chatService.resetUnreadCount(chatId, userId);
 
       client.emit('joined_chat', { chatId });
-      console.log(`✅ User ${userId} joined chat ${chatId}`);
-
+      this.logger.log(`✅ User ${userId} joined chat ${chatId}`);
     } catch (error) {
       client.emit('error', { message: error.message });
     }
@@ -124,20 +119,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
    * Leave chat room
    */
   @SubscribeMessage('leave_chat')
-  handleLeaveChat(
+  leaveChat(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string },
   ) {
-    const { chatId } = data;
-    client.leave(`chat:${chatId}`);
-
-    // Stop typing if was typing
-    this.handleStopTyping(client, data);
-
-    client.emit('left_chat', { chatId });
-    console.log(`✅ User ${client.data.userId} left chat ${chatId}`);
+    client.leave(this.getRoom(data.chatId));
+    this.stopTyping(client, data);
+    client.emit('left_chat', { chatId: data.chatId });
   }
-
   /**
    * Send message (real-time)
    */
@@ -252,45 +241,41 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
    * Typing indicator - start
    */
   @SubscribeMessage('typing_start')
-  handleStartTyping(
+  async startTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string },
   ) {
     const userId = client.data.userId;
     const { chatId } = data;
+    const key = this.throttleTypingKey(userId,chatId)
 
-    // Add to typing users
-    if (!this.typingUsers.has(chatId)) {
-      this.typingUsers.set(chatId, new Set());
-    }
-    this.typingUsers.get(chatId).add(userId);
+    const already = await this.redisService.get(key)
+    if(already) return;
 
+    await this.redisService.set(key,'1',5)
     // Emit to others in chat
-    client.to(`chat:${chatId}`).emit('user_typing', { userId, chatId });
+    client
+    .to(this.getRoom(chatId))
+    .emit('user_typing', { userId, chatId });
   }
 
   /**
    * Typing indicator - stop
    */
   @SubscribeMessage('typing_stop')
-  handleStopTyping(
+ async stopTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string },
   ) {
     const userId = client.data.userId;
     const { chatId } = data;
-
-    // Remove from typing users
-    const typingSet = this.typingUsers.get(chatId);
-    if (typingSet) {
-      typingSet.delete(userId);
-      if (typingSet.size === 0) {
-        this.typingUsers.delete(chatId);
-      }
-    }
+       const key = this.throttleTypingKey(userId,chatId)
+       await this.redisService.del(key);
 
     // Emit to others in chat
-    client.to(`chat:${chatId}`).emit('user_stopped_typing', { userId, chatId });
+    client
+    .to(this.getRoom(chatId))
+    .emit('user_stopped_typing', { userId, chatId });
   }
 
   /**

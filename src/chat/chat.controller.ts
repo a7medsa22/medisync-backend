@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException, Query, Put } from '@nestjs/common';
-import { ChatService } from './chat.service';
+import { ChatService } from './service/chat.service';
 import { MessageService } from './message.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
@@ -7,8 +7,12 @@ import type { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 import { UserRole } from '@prisma/client';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetMessagesDto, SendMessageDto } from './dto';
+import { ApiAuth } from 'src/common/decorators/api-auth.decorator';
+import { use } from 'passport';
+import type { AuthUser } from 'src/auth/interfaces/request-with-user.interface';
 
 @Controller('chat')
+@ApiAuth()
 export class ChatController {
   constructor(private readonly chatService: ChatService
        ,private readonly messageService:MessageService, 
@@ -23,7 +27,7 @@ export class ChatController {
   @ApiResponse({ status: 200, description: 'Conversations retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' }) 
-  async getConversations(@CurrentUser() user: JwtPayload) {
+  async getConversations(@CurrentUser() user:AuthUser ) {
     return this.chatService.getUserChats(user.sub, user.role);
   }
 

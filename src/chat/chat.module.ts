@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ChatService } from './chat.service';
+import { ChatService } from './service/chat.service';
 import { ChatController } from './chat.controller';
 import { MessageService } from './message.service';
 import { ChatGateway } from './chat.gateway';
@@ -8,9 +8,9 @@ import { forwardRef } from '@nestjs/common';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { RedisService } from 'src/common/cache/redis.service';
-import { ChatEventsService } from './chat-events.service';
+import { ChatEventsService } from './service/chat-events.service';
 import { WsJwtGuard } from 'src/auth/guards/ws-Jwt.guard';
-import { ActiveUsersService } from './active-users.service';
+import { ActiveUsersService } from './service/active-users.service';
 import { UserCacheService } from 'src/common/cache/user-cache.service';
 
 @Module({

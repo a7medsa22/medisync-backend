@@ -1,14 +1,14 @@
 import { forwardRef, Inject, Injectable, Logger, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ChatService } from './chat.service';
+import { ChatService } from './service/chat.service';
 import { MessageService } from './message.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { RedisService } from 'src/common/cache/redis.service';
 import { SendMessageDto } from './dto';
 import { WsJwtGuard } from 'src/auth/guards/ws-Jwt.guard';
-import { ActiveUsersService } from './active-users.service';
-import { ChatEventsService } from './chat-events.service';
+import { ActiveUsersService } from './service/active-users.service';
+import { ChatEventsService } from './service/chat-events.service';
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
   namespace: '/chat',

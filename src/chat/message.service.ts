@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { chatDetailsSelect, chatDetailsSelectWithStatus, connectionSelect } from 'src/common/selects/chat.select';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ChatService } from './chat.service';
+import { ChatService } from './service/chat.service';
 import { UserCacheService } from 'src/common/cache/user-cache.service';
 import { GetMessagesDto } from './dto';
 import { messageSelect } from 'src/common/selects/message.select';

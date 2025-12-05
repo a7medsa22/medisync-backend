@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConnectionStatus, UserRole } from '@prisma/client';
 import { chatDetailsSelect, connectionSelect, lastMessageSelect } from 'src/common/selects/chat.select';
-import { ChatDetailsResponseDto } from './dto';
+import { ChatDetailsResponseDto } from '../dto';
 import { RedisService } from 'src/common/cache/redis.service';
 import { ChatMapper } from 'src/common/mappers/chat.mapper';
 import { PrismaService } from 'src/prisma/prisma.service';

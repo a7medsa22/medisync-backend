@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { MessageService } from './message.service';
+import { MessageService } from '../message.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ActiveUsersService } from './active-users.service';
 

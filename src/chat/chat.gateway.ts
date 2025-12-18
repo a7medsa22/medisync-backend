@@ -39,6 +39,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.logger.log('Chat Gateway Initialized');
   }
 
+
   /**
   * Handle connection
   */

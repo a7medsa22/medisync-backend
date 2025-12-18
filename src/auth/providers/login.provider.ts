@@ -7,6 +7,7 @@ import { JwtPayload } from "../interfaces/jwt-payload.interface";
 import { AuthResponse } from "../interfaces/auth-response.interface";
 import { ConfigService } from "@nestjs/config";
 import { TokenProvider } from "./token.provider";
+import { use } from "passport";
 
 @Injectable()
 export class LoginProvider {
@@ -46,19 +47,10 @@ export class LoginProvider {
   let doctorId: string | null = null;
   let patientId: string | null = null;
 
-  if (user.role === UserRole.DOCTOR) {
-    const doctor = await this.prisma.doctor.findUnique({
-      where: { userId: user.id }
-    });
-     doctorId = doctor?.id || null; 
-  }
-
-  if (user.role === UserRole.PATIENT) {
-    const patient = await this.prisma.patient.findUnique({
-      where: { userId: user.id }
-    });
-    patientId = patient?.id || null;
-  }
+ 
+    doctorId = user.doctor?.id ?? null; 
+    patientId = user.patient?.id ?? null;
+  
 
     // Check account status
       await this.checkAccountStatus(user);

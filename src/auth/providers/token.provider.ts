@@ -53,9 +53,9 @@ export class TokenProvider {
   }
 
   
-  async validateJwtPayload(payload: JwtPayload): Promise<any> {
+  async validateJwtPayload(userId:string ): Promise<any> {
   const user = await this.prisma.user.findUnique({
-    where: { id: payload.sub },
+    where: { id: userId },
     include: {
       patient: true,
       doctor: {

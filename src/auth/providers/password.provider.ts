@@ -10,15 +10,15 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class PasswordProvider {
-    constructor(
+  constructor(
     private prisma: PrismaService,
     private otp: OtpProvider,
-    private configService:ConfigService,
-    private jwtService:JwtService,
-    private token:TokenProvider
+    private configService: ConfigService,
+    private jwtService: JwtService,
+    private token: TokenProvider
 
-  ) {}
- async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string; userId: string }> {
+  ) { }
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string; userId: string }> {
     const { email } = dto;
 
     const user = await this.prisma.user.findUnique({
@@ -53,9 +53,9 @@ export class PasswordProvider {
     // Generate temporary reset token (valid for 15 minutes)
     const resetToken = this.jwtService.sign(
       { userId, type: 'PASSWORD_RESET' },
-      { 
+      {
         secret: this.configService.get('JWT_SECRET'),
-        expiresIn: '15m' 
+        expiresIn: '15m'
       }
     );
 
@@ -101,43 +101,43 @@ export class PasswordProvider {
     }
   }
   async validateUser(email: string, password: string): Promise<any> {
-  const user = await this.prisma.user.findUnique({
-    where: { email },
-  });
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
-  if (user && await bcrypt.compare(password, user.password)) {
-    const { password, ...result } = user;
-    return result;
-  }
-  return null;
-}
-
-// change password with out OTP
-async changePassword(
-  userId: string, 
-  oldPassword: string, 
-  newPassword: string
-): Promise<{ message: string }> {
-  const user = await this.prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    throw new BadRequestException('User not found');
+    if (user && await bcrypt.compare(password, user.password)) {
+      const { password, ...result } = user;
+      return result;
+    }
+    return null;
   }
 
-  const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
-  if (!isOldPasswordValid) {
-    throw new BadRequestException('Current password is incorrect');
+  // change password with out OTP
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isOldPasswordValid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedNewPassword },
+    });
+
+    return { message: 'Password changed successfully' };
   }
-
-  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-
-  await this.prisma.user.update({
-    where: { id: userId },
-    data: { password: hashedNewPassword },
-  });
-
-  return { message: 'Password changed successfully' };
-}
 }

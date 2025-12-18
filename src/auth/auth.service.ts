@@ -56,8 +56,8 @@ export class AuthService {
     return this.otpProvider.resendOtp(userId, type);
   }
 
-  async validateJwtPayload(payload: JwtPayload): Promise<any> {
-    return this.tokenProvider.validateJwtPayload(payload);
+  async validateJwtPayload(userId: string): Promise<any> {
+    return this.tokenProvider.validateJwtPayload(userId);
   }
   async validateUser(email: string, password: string): Promise<any> {
     return this.passwordProvider.validateUser(email, password);

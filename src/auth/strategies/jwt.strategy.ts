@@ -20,19 +20,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
    try {
     const user = await this.authService.validateJwtPayload(payload.sub);
+    
       if(!user)
         throw new UnauthorizedException('User not found or inactive');
       
-       return {
-        sub: payload.sub,
-        email: payload.email,
-        role: payload.role,
-        status: payload.status,
-        doctorId: payload.doctorId,
-        patientId: payload.patientId,
-      };
+       return payload;
+
    } catch (error) {
-          throw new UnauthorizedException('Invalid token');
-   }
+ if (error instanceof UnauthorizedException) {
+    throw error;
+  }
+  throw new UnauthorizedException('Invalid or expired token');   }
   }
 }

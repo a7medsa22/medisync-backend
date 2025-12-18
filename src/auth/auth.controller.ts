@@ -1,9 +1,10 @@
-import { Controller, Post, Body, Request, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Request, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RefreshTokenDto, RegisterBasicDto, RegisterInitDto, RegisterVerifyEmailDto, ResendOtpDto, ResetPasswordDto, VerifyOtpDto } from './dto/auth.dto';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -110,6 +111,7 @@ export class AuthController {
   // ===============================================
 
   @Post('login')
+  @UseGuards(AuthGuard('local'))
   @Throttle({ auth: { limit: 5, ttl: 60000 } }) 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
@@ -158,8 +160,8 @@ export class AuthController {
     status: 400, 
     description: 'Invalid or expired verification code' 
   })
-  async login(@Body() body: LoginDto) {
-    return this.authService.login(body);
+  async login(@Req() req) {
+    return this.authService.login(req.user);
   }
 
   // ===============================================

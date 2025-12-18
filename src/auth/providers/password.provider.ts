@@ -102,12 +102,17 @@ export class PasswordProvider {
   }
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email }, 
+      include:{
+        patient:true,
+        doctor:{
+          include:{specialization:true}
+        }
+      }
     });
-
+     
     if (user && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
-      return result;
+      return user;
     }
     return null;
   }

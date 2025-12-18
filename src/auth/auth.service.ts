@@ -5,9 +5,10 @@ import { PasswordProvider } from "./providers/password.provider";
 import { RegisterProvider } from "./providers/register.provider";
 import { TokenProvider } from "./providers/token.provider";
 import { CompleteProfileDto, ForgotPasswordDto, LoginDto, RegisterBasicDto, RegisterInitDto, RegisterVerifyEmailDto, ResetPasswordDto, VerifyOtpDto } from "./dto/auth.dto";
-import { UserRole } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 import { JwtPayload } from "./interfaces/jwt-payload.interface";
 import { PrismaService } from "src/prisma/prisma.service";
+import { UserWithRelations } from "src/common/utils/auth.type";
 
 @Injectable()
 export class AuthService {
@@ -33,8 +34,8 @@ export class AuthService {
   } 
 
 
-  login(dto: LoginDto){
-    return this.loginProvider.login(dto)
+  login(user: UserWithRelations){
+    return this.loginProvider.login(user)
   }
   
 

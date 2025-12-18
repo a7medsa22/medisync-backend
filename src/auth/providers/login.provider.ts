@@ -8,6 +8,7 @@ import { AuthResponse } from "../interfaces/auth-response.interface";
 import { ConfigService } from "@nestjs/config";
 import { TokenProvider } from "./token.provider";
 import { use } from "passport";
+import { UserWithRelations } from "src/common/utils/auth.type";
 
 @Injectable()
 export class LoginProvider {
@@ -17,39 +18,16 @@ export class LoginProvider {
     private token: TokenProvider
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthResponse> {
-    const { email, password } = dto;
+  async login(user: UserWithRelations): Promise<AuthResponse> {
 
-    // Find user
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        patient: true,
-        doctor: {
-          include: {
-            specialization: true,
-          },
-        },
-      },
-    });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-      
-     // 2. جيب doctorId لو الـ user doctor
-  let doctorId: string | null = null;
-  let patientId: string | null = null;
 
- 
-    doctorId = user.doctor?.id ?? null; 
-    patientId = user.patient?.id ?? null;
+  const doctorId = user.doctor?.id ?? null;
+  const patientId = user.patient?.id ?? null;
   
 
     // Check account status
@@ -61,8 +39,8 @@ export class LoginProvider {
       email: user.email,
       role: user.role,
       status: user.status,
-      doctorId,  // new add
-      patientId  // new add
+      doctorId,  
+      patientId,
     };
 
     const accessToken = await this.token.generateAccessToken(payload);
@@ -82,8 +60,8 @@ export class LoginProvider {
         lastName: user.lastName,
         role: user.role,
         status: user.status,
-        doctorId: doctorId || null,
-        patientId: patientId || null,
+        doctorId: doctorId ,
+        patientId: patientId ,
       },
       accessToken,
       refreshToken,

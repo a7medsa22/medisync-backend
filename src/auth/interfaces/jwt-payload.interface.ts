@@ -10,3 +10,8 @@ export interface JwtPayload {
   iat?: number; // issued at
   exp?: number; // expires at
 }
+
+export interface RefreshJwtPayload {
+  sub: string;
+  tokenId: string;
+}

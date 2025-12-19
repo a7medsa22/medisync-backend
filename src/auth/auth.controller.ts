@@ -5,6 +5,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { RefreshTokenGuard } from './guards/refresh-token.guard';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -289,6 +290,7 @@ export class AuthController {
   // ===============================================
 
   @Post('refresh')
+  @UseGuards(RefreshTokenGuard)
   @Throttle({ auth: { limit: 10, ttl: 60000 } }) // 10 refresh attempts per minute
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
@@ -316,8 +318,9 @@ export class AuthController {
     status: 401, 
     description: 'Invalid refresh token' 
   })
-  async refreshToken(@Body() body: RefreshTokenDto) {
-    return this.authService.refreshToken(body.refreshToken);
+  async refreshToken(@Req() req) {
+    const {userId,tokenId} = req.user
+    return this.authService.refreshTokens(userId,tokenId);
   }
 
   @Post('logout')

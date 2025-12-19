@@ -50,9 +50,16 @@ export class AuthService {
     return this.passwordProvider.verifyResetPasswordOtp(dto)
   }
 
-  refreshToken(refreshToken: string){
-    return this.tokenProvider.refreshToken(refreshToken)
+  async validateRefreshToken (userId:string,tokenId:string){
+    return this.tokenProvider.validateRefreshToken(userId,tokenId)
   }
+  
+  async refreshTokens (userId:string,tokenId:string){
+    return this.tokenProvider.refreshTokens(userId,tokenId)
+  }
+  
+
+
   resendOtp(userId: string, type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET') {
     return this.otpProvider.resendOtp(userId, type);
   }

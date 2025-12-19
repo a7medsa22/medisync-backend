@@ -124,7 +124,7 @@ model Otp {
 model AuthToken {
   id         String    @id @default(uuid())
   userId     String
-  token      String    @unique
+  tokenHash  String
   type       TokenType
   isRevoked  Boolean   @default(false)
   createdAt  DateTime  @default(now())

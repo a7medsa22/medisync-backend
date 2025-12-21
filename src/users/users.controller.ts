@@ -8,6 +8,7 @@ import {
   Query,
   ParseUUIDPipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UserRole, UserStatus } from '@prisma/client';
@@ -20,6 +21,8 @@ import { Public } from '../auth/decorators/public.decorator'; // Add this import
 import { CompleteProfileDto } from 'src/auth/dto/auth.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserQueryDto } from './dto/user-query.dto';
+import { OwnershipGuard } from '../auth/guards/roles-ownership.guard';
+import { Owner } from '../auth/decorators/owner.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -34,6 +37,8 @@ export class UsersController {
   // ===============================================
 
   @Patch(':id/profile')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Public() // Allow access during registration process
   @ApiOperation({ 
     summary: 'Step 4: Complete Profile', 
@@ -235,6 +240,8 @@ export class UsersController {
   }
 
    @Get(':id')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @ApiAuth()
   @Roles(UserRole.ADMIN, UserRole.DOCTOR)
   @ApiOperation({
@@ -248,6 +255,8 @@ export class UsersController {
   }
 
   @Put(':id/activate')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @ApiAuth()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ 
@@ -261,6 +270,8 @@ export class UsersController {
   }
 
   @Put(':id/deactivate')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @ApiAuth()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ 
@@ -277,5 +288,3 @@ export class UsersController {
     return this.usersService.deactivateUser(userId, currentUserId);
   }
 }
-
-  

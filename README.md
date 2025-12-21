@@ -60,17 +60,18 @@ It provides secure authentication, appointment booking, prescription management,
 
 ```
 src/
-├── auth/                   # Authentication & Authorization
-├── users/                  # User management (base)
+├── auth/                  # Authentication & Authorization
+├── users/                 # User management (base)
 ├── specializations/       # Medical specializations
 ├── prescriptions/         # Prescription management
 ├── notifications/         # Real-time notifications
 ├── Request/               # Connection requests between doctors and patients
 ├── config/                # Application configuration
-├── email/                # Email configuration
-├── QR/              # QR code generation & verification
-├── common/              # Shared utilities, guards, decorators
-└── prisma/              # Prisma schema & migrations 
+├── chat/                  # Chat System and (Real-time)
+├── email/                 # Email configuration
+├── QR/                    # QR code generation & verification
+├── common/                # Shared utilities, guards, decorators
+└── prisma/                # Prisma schema & migrations 
 ```
 ---
 

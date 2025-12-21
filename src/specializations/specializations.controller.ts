@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { SpecializationsService } from './specializations.service';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
@@ -7,16 +7,18 @@ import { ApiAuth } from 'src/common/decorators/api-auth.decorator';
 import { UpdateSpecializationDto } from './dto/update-specialization.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CreateSpecializationDto } from './dto/create-specialization.dto';
+import { OwnershipGuard } from 'src/auth/guards/roles-ownership.guard';
+import { Owner } from 'src/auth/decorators/owner.decorator';
 
 @Controller('specializations')
 export class SpecializationsController {
-  constructor(private readonly specializationsService: SpecializationsService) {}
+  constructor(private readonly specializationsService: SpecializationsService) { }
 
 
   @Post()
   @ApiAuth()
-  @Roles(UserRole.DOCTOR,UserRole.ADMIN)
-  @ApiOperation({ 
+  @Roles(UserRole.DOCTOR, UserRole.ADMIN)
+  @ApiOperation({
     summary: 'Create new specialization (Doctor and Admin only)',
     description: 'Add a new medical specialization to the system'
   })
@@ -28,12 +30,12 @@ export class SpecializationsController {
 
   @Get()
   @Public()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get all specializations',
     description: 'Retrieve list of all medical specializations with doctor count'
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Specializations retrieved successfully',
     schema: {
       type: 'object',
@@ -66,7 +68,7 @@ export class SpecializationsController {
 
   @Get('popular')
   @Public()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get popular specializations',
     description: 'Get specializations sorted by number of doctors (most popular first)'
   })
@@ -80,12 +82,12 @@ export class SpecializationsController {
 
   @Get(':id')
   @Public()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get specialization by ID',
     description: 'Get detailed information about a specific specialization including associated doctors'
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Specialization retrieved successfully',
     schema: {
       type: 'object',
@@ -120,8 +122,10 @@ export class SpecializationsController {
 
   @Put(':id')
   @ApiAuth()
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update specialization (Admin only)',
     description: 'Update specialization information'
   })
@@ -137,8 +141,10 @@ export class SpecializationsController {
 
   @Delete(':id')
   @ApiAuth()
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Delete specialization (Admin only)',
     description: 'Delete a specialization (only if no doctors are associated)'
   })

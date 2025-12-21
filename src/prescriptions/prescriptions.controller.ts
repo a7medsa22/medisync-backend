@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, ParseBoolPipe, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, ParseBoolPipe, Put, UseGuards } from '@nestjs/common';
 import { PrescriptionsService } from './prescriptions.service';
 import { UpdatePrescriptionDto } from './dto/update-prescription.dto';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -7,6 +7,8 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
+import { OwnershipGuard } from 'src/auth/guards/roles-ownership.guard';
+import { Owner } from 'src/auth/decorators/owner.decorator';
 
 @ApiTags('Prescriptions')
 @ApiAuth()
@@ -152,6 +154,8 @@ export class PrescriptionsController {
   }
 
   @Get(':id')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @ApiOperation({
     summary: 'Get Prescription by ID',
     description: 'Get detailed information about a specific prescription',
@@ -172,6 +176,8 @@ export class PrescriptionsController {
   // ===============================================
 
   @Put(':id')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({
     summary: 'Update Prescription (Doctor)',
@@ -193,6 +199,8 @@ export class PrescriptionsController {
   }
 
   @Put(':id/deactivate')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({
     summary: 'Deactivate Prescription (Doctor)',
@@ -212,9 +220,3 @@ export class PrescriptionsController {
   }
   
 }
-
-
-
-
-
-

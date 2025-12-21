@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query,Put ,ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query,Put ,ParseIntPipe, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -12,6 +12,8 @@ import { SetAvailabilityDto } from './dto/set-availability.dto';
 import { ApiAuth } from 'src/common/decorators/api-auth.decorator';
 import { AuthUser } from 'src/auth/interfaces/request-with-user.interface';
 import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
+import { OwnershipGuard } from 'src/auth/guards/roles-ownership.guard';
+import { Owner } from 'src/auth/decorators/owner.decorator';
 
 @ApiTags('Requests & Connections')
 @ApiAuth()
@@ -65,6 +67,8 @@ export class RequestsController {
   }
 
   @Post(':id/accept')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({ 
     summary: 'Accept Follow-up Request (Doctor)',
@@ -83,6 +87,8 @@ export class RequestsController {
   }
 
   @Post(':id/reject')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({ 
     summary: 'Reject Follow-up Request (Doctor)',
@@ -123,6 +129,8 @@ export class RequestsController {
   }
 
   @Get('connections/:id')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @ApiOperation({ 
     summary: 'Get Connection Details',
     description: 'Get detailed information about a specific connection'
@@ -138,6 +146,8 @@ export class RequestsController {
   }
 
   @Put('connections/:id/availability')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({ 
     summary: 'Update Connection Availability (Doctor)',
@@ -155,6 +165,8 @@ export class RequestsController {
   }
 
   @Put('connections/:id/deactivate')
+  @UseGuards(OwnershipGuard)
+  @Owner('id')
   @Roles(UserRole.DOCTOR)
   @ApiOperation({ 
     summary: 'Deactivate Connection (Doctor)',
@@ -171,4 +183,3 @@ export class RequestsController {
   }
 
 }
-

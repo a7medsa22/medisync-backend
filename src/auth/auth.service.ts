@@ -7,19 +7,18 @@ import { TokenProvider } from './providers/token.provider';
 import {
   CompleteProfileDto,
   ForgotPasswordDto,
-  LoginDto,
   RegisterBasicDto,
   RegisterInitDto,
   RegisterVerifyEmailDto,
   ResetPasswordDto,
   VerifyOtpDto,
 } from './dto/auth.dto';
-import { User, UserRole } from '@prisma/client';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { UserRole } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserWithRelations } from 'src/common/utils/auth.type';
 import { Request } from 'express';
-import { use } from 'passport';
+import { GoogleOauth } from './providers/login-google.provider';
+import { GoogleUser } from './interfaces/google-user.interface';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +28,7 @@ export class AuthService {
     private passwordProvider: PasswordProvider,
     private otpProvider: OtpProvider,
     private tokenProvider: TokenProvider,
+    private googleLoginProvider: GoogleOauth,
     private prisma: PrismaService,
   ) { }
 
@@ -49,10 +49,16 @@ export class AuthService {
   }
 
   /////////////////
-  // Authentication //
+  // Login //
   /////////////////
   login(user: UserWithRelations, req: Request) {
     return this.loginProvider.login(user, req);
+  }
+  ////////////
+  //Oauth2 Login //
+  ////////////
+  async googleLogin(googleUser: GoogleUser, req: Request) {
+    return this.googleLoginProvider.googleLogin(googleUser, req);
   }
 
   //////////////////

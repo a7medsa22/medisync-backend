@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, IsEnum, MinLength, MaxLength, Matches, IsPhoneNumber, IsNotEmpty, IsUUID, Length } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsEnum, MinLength, MaxLength, Matches, IsNotEmpty, IsUUID, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { PasswordMatch } from 'src/common/validators/password-match.validator';

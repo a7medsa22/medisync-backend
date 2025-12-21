@@ -17,9 +17,9 @@ import { stat } from "fs";
    export const doctorInclude = {
     doctor: {
       include: {
-        user: {
+        user: { 
           select: {
-            id: true,
+            id: true, 
             firstName: true,
             lastName: true,
           },

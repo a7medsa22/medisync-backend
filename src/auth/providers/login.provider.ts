@@ -1,14 +1,12 @@
 import { PrismaService } from "src/prisma/prisma.service";
-import * as bcrypt from 'bcryptjs';
-import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { User, UserRole, UserStatus } from "@prisma/client";
+import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { User, UserStatus } from "@prisma/client";
 import { JwtPayload } from "../interfaces/jwt-payload.interface";
 import { AuthResponse } from "../interfaces/auth-response.interface";
 import { ConfigService } from "@nestjs/config";
 import { TokenProvider } from "./token.provider";
 import { UserWithRelations } from "src/common/utils/auth.type";
 import { Request } from "express";
-import { DeviceInfoDto } from "../dto/auth.dto";
 
 @Injectable()
 export class LoginProvider {
@@ -106,7 +104,7 @@ export class LoginProvider {
         throw new UnauthorizedException('Your account is inactive. Please contact support.');
 
       case UserStatus.SUSPENDED:
-        throw new UnauthorizedException('Your account is suspended. Please contact support.');
+        throw new ForbiddenException('Your account is suspended. Please contact support.');
 
       case UserStatus.ACTIVE:
         // continue

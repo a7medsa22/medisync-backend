@@ -15,8 +15,6 @@ import { AuthService } from './auth.service';
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
-  LoginDto,
-  RefreshTokenDto,
   RegisterBasicDto,
   RegisterInitDto,
   RegisterVerifyEmailDto,
@@ -35,6 +33,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { Public } from './decorators/public.decorator';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -215,6 +215,76 @@ export class AuthController {
   async login(@Req() req) {
     return this.authService.login(req.user, req);
   }
+  ////////////////////
+  //login with google//
+  /////////////////
+  @Get('google')
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth():Promise<void> {
+    // This endpoint is used for initiating Google OAuth2 flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Google OAuth2 callback',
+    description: 'Handle Google OAuth2 callback and login user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful, tokens provided',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Login successful.' },
+        data: {
+          type: 'object',
+          properties: {
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'uuid-string' },
+                role: { type: 'string', example: 'PATIENT' },
+                status: { type: 'string', example: 'ACTIVE' },
+              },
+            },
+            accessToken: {
+              type: 'string',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+            refreshToken: {
+              type: 'string',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+            expiresIn: { type: 'string', example: '15m' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid Google token or account not approved',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        message: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['Invalid Google token'],
+        },
+      },
+    },
+  })
+  async googleLogin(@Req() req) {
+    return this.authService.googleLogin(req.user, req);
+  } 
+
 
   // ===============================================
   // FORGOT PASSWORD WITH OTP

@@ -32,7 +32,8 @@ async function bootstrap() {
   })
 
     // Global Prefix
-  const apiPrefix = config.get('API_PREFIX')
+  let apiPrefix = config.get('API_PREFIX') ?? 'api';
+  apiPrefix = apiPrefix.replace(/\/v\d+$/i, '');
   app.setGlobalPrefix(apiPrefix)
 
   // Global Validation Pipe

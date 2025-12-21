@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../email/email.service';
-import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class OtpProvider {

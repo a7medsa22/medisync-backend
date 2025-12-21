@@ -37,6 +37,10 @@ It provides secure authentication, appointment booking, prescription management,
 - 🧾 QR Code Verification for Prescriptions
 - 🛡️ Secure endpoints with JWT & Guards
 - 🧠 Modular and Scalable Architecture using NestJS
+- 💬 Real-time Chat System (WebSockets) — in-app messaging between doctors and patients
+- ⚡ Caching with Redis to improve performance and reduce database load
+- 🧩 Google OAuth (OAuth2) integration for social login (Google Sign-In)
+- 🔒 Auth updates: Device-based sessions and support for multiple auth providers
 
 ----
 
@@ -78,8 +82,10 @@ src/
 ## 🔐 Security Features
 
 - **JWT Authentication** with refresh token rotation
-- **Role-based Access Control** (RBAC)
+- **Google OAuth** with refresh and revoke token rotation
+- **Role-based Access Control** (RBAC && ABAC)
 - **Data Validation** with class-validator
+- **Device-based Sessions** — per-device refresh tokens and session management (list/revoke device sessions)
 - **Rate Limiting** to prevent abuse
 - **Helmet Security Headers**
 - **CORS Configuration**
@@ -130,7 +136,7 @@ JWT_REFRESH_EXPIRES_IN="7d"
 # Application Configuration
 NODE_ENV="development"
 PORT=3000
-API_PREFIX="api/v1"
+API_PREFIX="api"  # Use just 'api' — versioning is handled via URI versioning (e.g. /api/v1)
 
 # File Upload Configuration
 MAX_FILE_SIZE=10485760  # 10MB in bytes
@@ -203,7 +209,14 @@ Each schema defines the structure and validation rules for the request/response 
 
 ---
 
-## 🔄 Development Workflow
+## � Authentication updates
+
+- **Device-based Sessions** — refresh tokens are bound to specific devices; users can view active device sessions and revoke them (e.g., `GET /auth/sessions`, `DELETE /auth/sessions/:id`). This improves security for lost/stolen devices.
+- **Local Strategy (email/password)** — Passport Local strategy is supported for traditional email/password authentication and works alongside OAuth providers like Google.
+
+---
+
+## �🔄 Development Workflow
 
 This project follows agile development principles with:
 - **MVP-first approach** - core features first
@@ -219,6 +232,7 @@ This project follows agile development principles with:
 - Medical record management
 - Admin user management
 - Role-based access control
+- Google Oauth 
 - Email notifications for important events
 - QR code generation & verification
 - Connection requests between doctors and patients
@@ -228,9 +242,9 @@ This project follows agile development principles with:
 
 
 ### Phase 2 (Enhanced)
-- Advanced file management
+- Advanced file management => ...working
 - Detailed analytics
-- Mobile API optimization
+- Mobile API optimization => ...working
 
 
 ### Phase 3 (Advanced)

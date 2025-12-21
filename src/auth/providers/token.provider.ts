@@ -3,9 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TokenType, User, UserRole, UserStatus } from '@prisma/client';
+import { TokenType,UserRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs'
-import { throws } from 'assert';
 import { DeviceInfoDto } from '../dto/auth.dto';
 
 @Injectable()

@@ -13,6 +13,7 @@ import { RegisterProvider } from './providers/register.provider';
 import { TokenProvider } from './providers/token.provider';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleOauth } from './providers/login-google.provider';
 
 @Module({
   imports:[
@@ -32,7 +33,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
      ConfigModule
   ],
   controllers: [AuthController],
-  providers: [AuthService,JwtStrategy,LoginProvider,RegisterProvider,OtpProvider,PasswordProvider,TokenProvider],
+  providers: [AuthService,JwtStrategy,LoginProvider,RegisterProvider,OtpProvider,PasswordProvider,TokenProvider,GoogleOauth],
   exports:[AuthService,JwtModule,PassportModule],
 })
 export class AuthModule {}

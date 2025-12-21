@@ -5,7 +5,6 @@ import { ForgotPasswordDto, ResetPasswordDto, VerifyOtpDto } from '../dto/auth.d
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtpProvider } from './otp.provider';
 import { ConfigService } from '@nestjs/config';
-import { TokenProvider } from './token.provider';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -15,7 +14,6 @@ export class PasswordProvider {
     private otp: OtpProvider,
     private configService: ConfigService,
     private jwtService: JwtService,
-    private token: TokenProvider
 
   ) { }
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string; userId: string }> {
@@ -103,19 +101,32 @@ export class PasswordProvider {
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: {
-        patient: true,
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        authProvider: true,
+        isActive: true,
+        status: true,
+        patient: { select: { id: true } },
         doctor: {
-          include: { specialization: true }
+          select: { id: true, specialization: true }
         }
       }
     });
+    if(!user || !user.password)
+      throw new UnauthorizedException('Invalid credentials');
 
-    if (user && await bcrypt.compare(password, user.password)) {
-      return user;
+    if(user.authProvider !== 'LOCAL')
+      throw new UnauthorizedException('Use social login');
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match)
+      throw new UnauthorizedException();
+
     }
-    return null;
-  }
+    
 
   // change password with out OTP
   async changePassword(
@@ -127,7 +138,7 @@ export class PasswordProvider {
       where: { id: userId },
     });
 
-    if (!user) {
+    if (!user || !user.password) {
       throw new BadRequestException('User not found');
     }
 

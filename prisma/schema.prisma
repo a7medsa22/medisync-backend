@@ -27,6 +27,13 @@ enum TokenType {
   ACCESS
   REFRESH
 }
+enum AuthProvider {
+  LOCAL
+  EMAIL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
 
 
 
@@ -70,7 +77,7 @@ enum ConnectionType {
 model User {
   id              String     @id @default(uuid())
   email           String     @unique
-  password        String
+  password        String? 
   firstName       String
   lastName        String
   phone           String?
@@ -84,6 +91,11 @@ model User {
   rejectionReason String?
   isProfileComplete Boolean @default(false)
   registrationStep Int      @default(0) // 0=init, 1=basic, 2=verified, 3=complete
+  authProvider    AuthProvider @default(LOCAL)
+  providerId      String?    // For social logins
+  profilePhoto    String?
+  
+  
 
   // Identity Docs (Doctors only)
   nationalId      String?    @unique

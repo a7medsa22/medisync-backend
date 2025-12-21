@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import  {CompleteProfileDto, RegisterBasicDto, RegisterInitDto, RegisterVerifyEmailDto, VerifyOtpDto } from '../dto/auth.dto';
+import { CompleteProfileDto, RegisterBasicDto, RegisterInitDto, RegisterVerifyEmailDto, VerifyOtpDto } from '../dto/auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole, UserStatus } from '@prisma/client';
@@ -9,20 +9,20 @@ import { use } from 'passport';
 
 @Injectable()
 export class RegisterProvider {
-     constructor(
+  constructor(
     private prisma: PrismaService,
     private otp: OtpProvider,
-  ) {}
+  ) { }
 
-   /**
-    * 
-    * @param dto RegisterInitDto 
-    * @returns { success: boolean; message: string; data: { tempUserId: string; role: UserRole; status: string } }
-    */
-  async registerInit(dto: RegisterInitDto): Promise<{ 
-    success: boolean; 
-    message: string; 
-    data: { tempUserId: string; role: UserRole; status: string } 
+  /**
+   * 
+   * @param dto RegisterInitDto 
+   * @returns { success: boolean; message: string; data: { tempUserId: string; role: UserRole; status: string } }
+   */
+  async registerInit(dto: RegisterInitDto): Promise<{
+    success: boolean;
+    message: string;
+    data: { tempUserId: string; role: UserRole; status: string }
   }> {
     const { role } = dto;
 
@@ -52,11 +52,12 @@ export class RegisterProvider {
     };
   }
 
-   /*Step 2: Register basic info (email, password, name) */
-  
+  /*Step 2: Register basic info (email, password, name) */
+
   async registerBasic(dto: RegisterBasicDto): Promise<{
-  message: string; 
-  data: { userId: string; status: string }  }> {
+    message: string;
+    data: { userId: string; status: string }
+  }> {
     const { tempUserId, email, password, confirmPassword, firstName, lastName } = dto;
 
     // Validate password confirmation
@@ -78,9 +79,9 @@ export class RegisterProvider {
       where: { email },
     });
 
-     if (existingUser && existingUser.id !== tempUserId) {
-    throw new ConflictException('Email already registered');
-  }
+    if (existingUser && existingUser.id !== tempUserId) {
+      throw new ConflictException('Email already registered');
+    }
 
 
     // Hash password
@@ -103,22 +104,22 @@ export class RegisterProvider {
     await this.otp.generateAndSendOtp(updatedUser.id, 'EMAIL_VERIFICATION');
 
     return {
-      
-    message: 'Basic info saved. Please verify your email.', 
-     data: {
-      userId: updatedUser.id,
-      status: updatedUser.status,
-    },
-  }
-}
 
-   /**
-    * 
-    * @param dto RegisterVerifyEmailDto 
-    * @returns { success: boolean; message: string; data: { userId: string; status: string } }
-    */
-   async registerVerifyEmail(dto: RegisterVerifyEmailDto): Promise<{
-    data: { userId: string; status: string ,message: string}
+      message: 'Basic info saved. Please verify your email.',
+      data: {
+        userId: updatedUser.id,
+        status: updatedUser.status,
+      },
+    }
+  }
+
+  /**
+   * 
+   * @param dto RegisterVerifyEmailDto 
+   * @returns { success: boolean; message: string; data: { userId: string; status: string } }
+   */
+  async registerVerifyEmail(dto: RegisterVerifyEmailDto): Promise<{
+    data: { userId: string; status: string, message: string }
   }> {
     const { userId, otp } = dto;
 
@@ -130,28 +131,28 @@ export class RegisterProvider {
     // Update user status to approved (or keep pending for admin approval)
     await this.prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         status: UserStatus.EMAIL_VERIFIED, // Still needs admin approval
         registrationStep: 2,
         // Add email verification flag if needed
       },
     });
 
-   return {
+    return {
       data: {
         userId,
         status: 'EMAIL_VERIFIED',
-        message: 'Email verified successfully. Please complete your profile.',  
+        message: 'Email verified successfully. Please complete your profile.',
       },
     };
   }
-   
-   /**
-    * (Step 4)
-    * @param userId string 
-    * @param dto CompleteProfileDto 
-    * @returns { success: boolean; message: string; data: { userId: string; status: string } }
-    */
+
+  /**
+   * (Step 4)
+   * @param userId string 
+   * @param dto CompleteProfileDto 
+   * @returns { success: boolean; message: string; data: { userId: string; status: string } }
+   */
   async completeUserProfile(userId: string, dto: CompleteProfileDto): Promise<{
     data: { userId: string; status: string, message: string };
   }> {

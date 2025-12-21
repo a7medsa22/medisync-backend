@@ -38,7 +38,8 @@ export class UsersService {
       doctor: { include: { specialization: true } },
     };
   }
-
+ 
+  //state pattern for registration steps
   private getNextRegistrationStep(status: UserStatus) {
     switch (status) {
       case UserStatus.INIT:

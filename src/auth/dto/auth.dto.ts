@@ -193,3 +193,15 @@ export class ResendOtpDto {
   @IsEnum(['EMAIL_VERIFICATION', 'PASSWORD_RESET'], { message: 'Type must be either EMAIL_VERIFICATION or PASSWORD_RESET' })
   type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
 }
+
+export class DeviceInfoDto {
+  @IsOptional()
+  @IsString()
+  userAgent?: string;
+  @IsOptional()
+  @IsString()
+  deviceName?: string;
+  @IsOptional()
+  @IsString()
+  ipAddress?: string;
+}

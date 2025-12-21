@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TokenType, User, UserRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs'
 import { throws } from 'assert';
+import { DeviceInfoDto } from '../dto/auth.dto';
 
 @Injectable()
 export class TokenProvider {
@@ -15,7 +16,7 @@ export class TokenProvider {
     private prisma: PrismaService,
   ) { }
 
-
+  // Refresh tokens
   async refreshTokens(userId: string, tokenId: string) {
 
     const token = await this.validateRefreshToken(userId, tokenId);
@@ -33,7 +34,7 @@ export class TokenProvider {
       where: { id: userId },
     });
 
-    if(!user) throw new UnauthorizedException('Token reuse detected');
+    if (!user) throw new UnauthorizedException('Token reuse detected');
 
     const payload = {
       sub: user.id,
@@ -59,7 +60,8 @@ export class TokenProvider {
     });
   }
 
-  async generateRefreshToken(userId: string): Promise<string> {
+  // Generate refresh token and store its hash in the database
+  async generateRefreshToken(userId: string, deviceInfo?: DeviceInfoDto): Promise<string> {
     const tokenId = crypto.randomUUID();
     const refreshToken = this.jwtService.sign(
       { sub: userId, tokenId },
@@ -76,8 +78,9 @@ export class TokenProvider {
         id: tokenId,
         userId,
         tokenHash: hash,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
         type: TokenType.REFRESH,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        ...deviceInfo,
       }
     });
 
@@ -85,7 +88,7 @@ export class TokenProvider {
   }
 
 
-
+  // Validate refresh token
   async validateRefreshToken(userId: string, tokenId: string) {
     const token = await this.prisma.authToken.findUnique({
       where: { id: tokenId },
@@ -101,6 +104,8 @@ export class TokenProvider {
 
   };
 
+
+  // Validate JWT payload and return user info
   async validateJwtPayload(userId: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -127,5 +132,39 @@ export class TokenProvider {
     };
   }
 
+  // Get active sessions for a user
+  async getUserSessions(userId: string) {
+    return this.prisma.authToken.findMany({
+      where: {
+        userId,
+        isRevoked: false,
+        expiresAt: { gt: new Date() },
+      },
+      select: {
+        id: true,
+        deviceName: true,
+        userAgent: true,
+        ipAddress: true,
+        createdAt: true,
+      },
+    });
+  }
+  // Revoke a specific session
+  async revokeSession(userId: string, tokenId: string) {
+    await this.prisma.authToken.updateMany({
+      where: {
+        id: tokenId,
+        userId
+      },
+      data: { isRevoked: true },
+    });
+    return { success: true }
+  };
 
+  async revokeAllSessions(userId: string) {
+  await this.prisma.authToken.updateMany({
+    where: { userId },
+    data: { isRevoked: true },
+  });
+}
 }

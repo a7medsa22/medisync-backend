@@ -92,7 +92,7 @@ export class TokenProvider {
     const token = await this.prisma.authToken.findUnique({
       where: { id: tokenId },
     });
-    if (!token || token.isRevoked || token.expiresAt < new Date()) {
+    if (!token || token.isRevoked  || token.expiresAt < new Date()) {
       throw new UnauthorizedException('invalid refresh token')
     }
 

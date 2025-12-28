@@ -6,14 +6,16 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { OtpProvider } from './otp.provider';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { log } from 'console';
 
 @Injectable()
 export class PasswordProvider {
+
   constructor(
-    private prisma: PrismaService,
-    private otp: OtpProvider,
-    private configService: ConfigService,
-    private jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    private readonly otp: OtpProvider,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
 
   ) { }
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string; userId: string }> {
@@ -95,6 +97,7 @@ export class PasswordProvider {
         message: 'Password reset successfully. You can now login with your new password.',
       };
     } catch (error) {
+      log
       throw new BadRequestException('Invalid or expired reset token');
     }
   }

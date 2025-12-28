@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User, Prisma, UserRole, UserStatus } from '@prisma/client';
+import { User, UserRole, UserStatus } from '@prisma/client';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 export type UserWithoutPassword = Omit<User, 'password'>;
@@ -8,9 +8,9 @@ export type UserWithoutPassword = Omit<User, 'password'>;
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
   // --- Common Helpers 
-  private baseUserSelect = {
+  private readonly baseUserSelect = {
     id: true,
     email: true,
     firstName: true,

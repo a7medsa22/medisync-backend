@@ -15,3 +15,6 @@ export interface RefreshJwtPayload {
   sub: string;
   tokenId: string;
 }
+export interface UserRoleType{
+  role: UserRole;
+}

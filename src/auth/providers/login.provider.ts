@@ -11,9 +11,9 @@ import { Request } from "express";
 @Injectable()
 export class LoginProvider {
   constructor(
-    private prisma: PrismaService,
-    private config: ConfigService,
-    private token: TokenProvider
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+    private readonly token: TokenProvider
   ) { }
 
   async login(user: UserWithRelations, req: Request): Promise<AuthResponse> {

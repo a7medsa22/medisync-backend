@@ -7,11 +7,10 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
-  ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { UserRole, UserStatus } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { UsersService } from './users.service';
 import { AuthService } from '../auth/auth.service'; // Add this import
 import { ApiAuth } from '../common/decorators/api-auth.decorator';

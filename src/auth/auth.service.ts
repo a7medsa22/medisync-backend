@@ -13,8 +13,6 @@ import {
   ResetPasswordDto,
   VerifyOtpDto,
 } from './dto/auth.dto';
-import { UserRole } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { UserWithRelations } from 'src/common/utils/auth.type';
 import { Request } from 'express';
 import { GoogleOauth } from './providers/login-google.provider';
@@ -23,13 +21,12 @@ import { GoogleUser } from './interfaces/google-user.interface';
 @Injectable()
 export class AuthService {
   constructor(
-    private loginProvider: LoginProvider,
-    private registerProvider: RegisterProvider,
-    private passwordProvider: PasswordProvider,
-    private otpProvider: OtpProvider,
-    private tokenProvider: TokenProvider,
-    private googleLoginProvider: GoogleOauth,
-    private prisma: PrismaService,
+    private readonly loginProvider: LoginProvider,
+    private readonly registerProvider: RegisterProvider,
+    private readonly passwordProvider: PasswordProvider,
+    private readonly otpProvider: OtpProvider,
+    private readonly tokenProvider: TokenProvider,
+    private readonly googleLoginProvider: GoogleOauth,
   ) { }
 
   ///////////////////

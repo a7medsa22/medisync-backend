@@ -5,8 +5,8 @@ import { EmailService } from '../../email/email.service';
 @Injectable()
 export class OtpProvider {
   constructor(
-    private prisma: PrismaService,
-    private emailService: EmailService,
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
   ) { }
 
   async generateAndSendOtp(userId: string, type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET'): Promise<void> {

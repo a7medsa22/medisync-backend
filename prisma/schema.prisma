@@ -177,10 +177,10 @@ model Patient {
   id               String    @id @default(uuid())
   userId           String    @unique
    // Personal Info
-   profilePhoto   String?
-  dateOfBirth      DateTime?
-  gender           String?
-  bloodType        String?
+  profilePhoto   String?
+  dateOfBirth    DateTime?
+  gender         String?
+  bloodType      String?
   height         Float?
   weight         Float?
 
